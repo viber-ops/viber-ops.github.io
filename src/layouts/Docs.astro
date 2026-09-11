@@ -1,0 +1,124 @@
+---
+import Site from './Site.astro';
+import { docGroups, docHref, release, sourceURL } from '../data/site';
+interface Props {
+  frontmatter: { title: string; description: string; source?: string };
+  headings?: { depth: number; slug: string; text: string }[];
+}
+const { frontmatter, headings = [] } = Astro.props;
+const pages = docGroups.flatMap((group) => group.pages);
+const current = pages.findIndex((page) => docHref(page.slug) === Astro.url.pathname);
+const previous = pages[current - 1];
+const next = pages[current + 1];
+const toc = headings.filter((heading) => heading.depth === 2);
+---
+
+<Site
+  title={`${frontmatter.title} — Configra 文档 | Viber Ops`}
+  description={frontmatter.description}
+  section="docs"
+>
+  <div class="docs-topbar">
+    <div class="container">
+      <a href="/configra/">
+        <span class="mini-mark">c</span> Configra <span class="topbar-divider">/</span> 使用文档
+      </a>
+      <span class="tag">{release}</span>
+    </div>
+  </div>
+  <div class="docs-layout">
+    <aside class="docs-sidebar" aria-label="文档目录">
+      <details class="docs-menu" open>
+        <summary>
+          浏览文档 <span aria-hidden="true">⌄</span>
+        </summary>
+        <nav aria-label="Configra 文档">
+          {docGroups.map((group) => (
+            <div class="nav-group">
+              <p>{group.label}</p>
+              {group.pages.map((page) => (
+                <a
+                  href={docHref(page.slug)}
+                  aria-current={docHref(page.slug) === Astro.url.pathname ? 'page' : undefined}
+                >
+                  {page.title}
+                </a>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </details>
+      <a class="sidebar-source" href="https://github.com/viber-ops/configra">
+        在 GitHub 查看项目 ↗
+      </a>
+    </aside>
+    <main id="main" class="doc-main">
+      <div class="doc-breadcrumb">
+        <a href="/docs/configra/">Configra</a>
+        <span aria-hidden="true">/</span>
+        <span>{frontmatter.title}</span>
+      </div>
+      <header class="doc-header">
+        <h1>{frontmatter.title}</h1>
+        <p>{frontmatter.description}</p>
+      </header>
+      <article class="prose">
+        <slot />
+      </article>
+      <div class="doc-source">
+        <span>对应版本 {release}</span>
+        {frontmatter.source && (
+          <a href={`${sourceURL}/${frontmatter.source}`}>查看实现与详细说明 ↗</a>
+        )}
+      </div>
+      <nav class="doc-pagination" aria-label="前后篇文档">
+        {previous ? (
+          <a href={docHref(previous.slug)}>
+            <span>← 上一篇</span>
+            <strong>{previous.title}</strong>
+          </a>
+        ) : (
+          <div />
+        )}
+        {next && (
+          <a href={docHref(next.slug)} class="next">
+            <span>下一篇 →</span>
+            <strong>{next.title}</strong>
+          </a>
+        )}
+      </nav>
+    </main>
+    <aside class="doc-toc" aria-label="本页目录">
+      <p>本页内容</p>
+      {toc.map((heading) => (
+        <a href={`#${heading.slug}`}>{heading.text}</a>
+      ))}
+      <a class="toc-help" href="https://github.com/viber-ops/configra/issues">
+        遇到问题？反馈到 GitHub ↗
+      </a>
+    </aside>
+  </div>
+  <script>
+    const menu = document.querySelector<HTMLDetailsElement>('.docs-menu');
+    if (menu && matchMedia('(max-width: 900px)').matches) menu.open = false;
+    for (const pre of document.querySelectorAll('article pre')) {
+      const button = document.createElement('button');
+      button.className = 'copy-code';
+      button.type = 'button';
+      button.textContent = '复制';
+      button.setAttribute('aria-label', '复制代码');
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(pre.querySelector('code')?.textContent ?? '');
+          button.textContent = '已复制';
+        } catch {
+          button.textContent = '请手动复制';
+        }
+        setTimeout(() => {
+          button.textContent = '复制';
+        }, 2000);
+      });
+      pre.append(button);
+    }
+  </script>
+</Site>

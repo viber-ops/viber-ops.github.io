@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+interface Props {
+  title: string;
+  description: string;
+  section?: string;
+}
+const { title, description, section = '' } = Astro.props;
+const notFound = Astro.url.pathname === '/404/' || Astro.url.pathname === '/404.html';
+const canonical = new URL(notFound ? '/404.html' : Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0b1631" />
+    {notFound && <meta name="robots" content="noindex" />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">
+      跳转到正文
+    </a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="Viber Ops 首页">
+          <span class="brand-symbol" aria-hidden="true">
+            v<span>_</span>
+          </span>
+          viber<span class="brand-ops">ops</span>
+        </a>
+        <nav class="desktop-nav" aria-label="主导航">
+          <a href="/#products" aria-current={section === 'products' ? 'page' : undefined}>
+            产品
+          </a>
+          <a href="/docs/configra/" aria-current={section === 'docs' ? 'page' : undefined}>
+            文档
+          </a>
+          <a href="/docs/configra/installation/">下载</a>
+        </nav>
+        <a class="github-link" href="https://github.com/viber-ops">
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+    <slot />
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div>
+          <a href="/" class="footer-brand">
+            viber ops<span aria-hidden="true">_</span>
+          </a>
+          <p>为研发与运维，构建可掌控的工具。</p>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href="/configra/">Configra</a>
+          <a href="/docs/configra/">使用文档</a>
+          <a href="https://github.com/viber-ops">GitHub ↗</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
