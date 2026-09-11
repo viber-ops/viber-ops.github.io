@@ -5,7 +5,7 @@ export const products = [
   {
     name: 'Configra',
     href: '/configra/',
-    description: '配置、敏感值与机器访问，在一个地方管理。',
+    description: '应用配置与敏感值管理服务，提供版本历史、客户端证书和 Kubernetes 集成。',
     status: 'Preview',
     category: 'CONFIGURATION & SECRETS',
   },

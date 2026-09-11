@@ -4,8 +4,8 @@ import { products } from '../data/site';
 ---
 
 <Site
-  title="Viber Ops — 为研发与运维构建的工具"
-  description="Viber Ops 的运维产品与使用文档。从 Configra 开始，集中管理应用配置、敏感值与机器访问。"
+  title="Viber Ops — 自托管运维工具"
+  description="Viber Ops 产品与使用文档。Configra 提供应用配置、敏感值和客户端证书管理，支持 Go SDK 与 Kubernetes 接入。"
   section="products"
 >
   <main id="main">
@@ -13,17 +13,15 @@ import { products } from '../data/site';
       <div class="container hero-grid">
         <div class="hero-copy">
           <p class="eyebrow">
-            <span class="status-dot" aria-hidden="true"></span> BUILT FOR THE PEOPLE WHO OPERATE
+            <span class="status-dot" aria-hidden="true"></span> VIBER OPS
           </p>
           <h1>
-            系统更有序。
+            研发与运维的
             <br />
-            <span>运维更从容。</span>
+            <span>自托管工具。</span>
           </h1>
           <p class="hero-intro">
-            为研发与运维打造的工具。
-            <br />
-            从应用配置开始，把分散的日常操作变成清晰、可追溯的工作流。
+            Configra 是我们的第一个产品：集中管理应用配置和敏感值，支持 Go SDK 与 Kubernetes 接入。
           </p>
           <div class="actions">
             <a class="button button-light" href="/configra/">
@@ -35,8 +33,8 @@ import { products } from '../data/site';
           </div>
           <div class="hero-note">
             <span>SELF-HOSTED</span>
-            <span>DEVELOPER-FOCUSED</span>
-            <span>KUBERNETES-READY</span>
+            <span>GO SDK</span>
+            <span>KUBERNETES</span>
           </div>
         </div>
         <div class="hero-product">
@@ -57,9 +55,9 @@ import { products } from '../data/site';
           </a>
           <div class="product-caption">
             <span>
-              <span class="status-dot" aria-hidden="true"></span> 配置与敏感值，各归其位
+              <span class="status-dot" aria-hidden="true"></span> Configra Vault 工作台
             </span>
-            <span>01 / CONFIGRA</span>
+            <span>演示数据</span>
           </div>
         </div>
       </div>
@@ -67,14 +65,9 @@ import { products } from '../data/site';
     <section id="products" class="section container">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">THE TOOLKIT</p>
-          <h2>从一个真正需要的工具开始。</h2>
+          <p class="eyebrow">PRODUCTS</p>
+          <h2>产品</h2>
         </div>
-        <p>
-          独立的产品，统一的入口。
-          <br />
-          按你的系统需要选择和部署。
-        </p>
       </div>
       {products.map((product) => (
         <article class="product-row">
@@ -106,31 +99,14 @@ import { products } from '../data/site';
         </article>
       ))}
     </section>
-    <section class="principles section container">
-      <div>
-        <span class="index-label">01 / OWN YOUR RUNTIME</span>
-        <h3>运行在你的基础设施里</h3>
-        <p>服务、配置和密钥由你部署与管理。明确依赖，也明确数据留在哪里。</p>
-      </div>
-      <div>
-        <span class="index-label">02 / KNOW THE BOUNDARIES</span>
-        <h3>能力与边界，一起说清楚</h3>
-        <p>不只介绍功能。权限范围、更新行为和发布状态，都写进使用文档。</p>
-      </div>
-      <div>
-        <span class="index-label">03 / GET TO WORK</span>
-        <h3>从接入到维护，有路可循</h3>
-        <p>本地体验、SDK、Kubernetes、备份与升级，为完整使用周期提供指引。</p>
-      </div>
-    </section>
     <section class="docs-banner container">
       <div>
-        <p class="eyebrow">READ. RUN. UNDERSTAND.</p>
-        <h2>下一步，把 Configra 跑起来。</h2>
-        <p>先了解工作方式，再接入你的第一个应用。</p>
+        <p class="eyebrow">DOCUMENTATION</p>
+        <h2>Configra 使用文档</h2>
+        <p>本地启动、应用接入、Kubernetes 部署与备份。</p>
       </div>
       <a class="button button-light" href="/docs/configra/quickstart/">
-        打开使用指南 →
+        查看快速开始 →
       </a>
     </section>
   </main>

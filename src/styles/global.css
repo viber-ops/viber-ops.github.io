@@ -436,24 +436,10 @@ h3[id] {
   align-items: center;
   flex: none;
 }
-.principles {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 60px;
-  padding-top: 0;
-}
 .index-label {
   font: 11px var(--mono);
   color: var(--muted);
   letter-spacing: 0.6px;
-}
-.principles h3 {
-  font-size: 18px;
-  margin: 18px 0 12px;
-}
-.principles p {
-  font-size: 15px;
-  color: var(--muted);
 }
 .docs-banner {
   display: flex;
@@ -547,9 +533,6 @@ h3[id] {
     height: 72px;
     width: 72px;
     font-size: 50px;
-  }
-  .principles {
-    gap: 30px;
   }
   .section-heading h2 {
     font-size: 26px;
@@ -653,18 +636,6 @@ h3[id] {
     flex-direction: row;
     margin: 0;
     gap: 22px;
-  }
-  .principles {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    padding-top: 0;
-  }
-  .principles > div {
-    border-top: 1px solid var(--line);
-    padding-top: 22px;
-  }
-  .principles h3 {
-    margin-top: 12px;
   }
   .docs-banner {
     padding: 30px;
