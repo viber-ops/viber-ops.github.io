@@ -1,0 +1,217 @@
+---
+import Site from '../../layouts/Site.astro';
+import { release, releaseURL } from '../../data/site';
+---
+
+<Site
+  title="Configra — Configuration and sensitive-value management | Viber Ops"
+  description="Manage YAML, JSON, sensitive values and client certificates. Applications read configuration through the Go SDK, CSI files or native Kubernetes objects."
+  section="products"
+>
+  <main id="main">
+    <section class="product-hero container">
+      <div class="product-kicker">
+        <span class="mini-mark">c</span>
+        <span>Configra</span>
+        <a class="tag" href={releaseURL}>
+          {release} · Preview
+        </a>
+      </div>
+      <h1>
+        Manage application
+        <br />
+        <span>configuration and secrets.</span>
+      </h1>
+      <p class="product-intro">
+        YAML, JSON, passwords and certificate files for each environment.
+        <br class="desktop-break" />
+        Read them through the Go SDK, mounted files or native Secret / ConfigMap objects.
+      </p>
+      <div class="actions">
+        <a class="button button-primary" href="/en/docs/configra/quickstart/">
+          Get started →
+        </a>
+        <a class="button button-outline" href="/en/docs/configra/installation/">
+          Download for macOS / Linux
+        </a>
+        <a class="text-link" href="https://github.com/viber-ops/configra">
+          View source ↗
+        </a>
+      </div>
+      <div class="product-facts">
+        <span>Self-hosted</span>
+        <span>YAML / JSON</span>
+        <span>Go SDK</span>
+        <span>Two Kubernetes modes</span>
+      </div>
+      <figure class="workspace-shot">
+        <div class="shot-header">
+          <span>CONFIGRA / VAULT</span>
+          <span>Items, environment variants and revision history</span>
+        </div>
+        <a href="/assets/configra/vault-light.png" aria-label="Open the full Vault screenshot">
+          <img
+            src="/assets/configra/vault-light.png"
+            width="1440"
+            height="1000"
+            alt="Configra Vault workspace showing a database item, environment variants, field references and revision history."
+            fetchpriority="high"
+          />
+        </a>
+        <figcaption>Actual UI · Demo data · Sensitive values hidden by default</figcaption>
+      </figure>
+    </section>
+    <section class="section container use-cases">
+      <div>
+        <p class="eyebrow">USE CASES</p>
+        <h2>When is Configra useful?</h2>
+      </div>
+      <ul class="check-list">
+        <li>
+          You copy environment-specific configuration between repositories, scripts and clusters.
+        </li>
+        <li>
+          Several configurations share passwords or certificate files that you want to reference
+          instead of duplicate.
+        </li>
+        <li>
+          Developers need configuration reads; operators need revision history and credential
+          management.
+        </li>
+        <li>
+          Some applications can use an SDK, while others only read files or environment variables.
+        </li>
+      </ul>
+    </section>
+    <section class="feature-section">
+      <div class="container section">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">INTEGRATIONS</p>
+            <h2>Three ways to connect applications</h2>
+          </div>
+          <p>
+            Go applications can use the SDK.
+            <br />
+            Other applications can read files or environment variables.
+          </p>
+        </div>
+        <div class="delivery-grid">
+          <article>
+            <span class="index-label">GO SDK</span>
+            <h3>Read resolved configuration</h3>
+            <p>
+              Fetch YAML / JSON with the Go SDK. The Viper Handler adds ETag polling and an
+              in-memory last-known-good snapshot.
+            </p>
+            <a class="text-link" href="/en/docs/configra/go-sdk/">
+              Use the Go SDK →
+            </a>
+          </article>
+          <article>
+            <span class="index-label">CSI PROVIDER</span>
+            <h3>Mount files into a Pod</h3>
+            <p>
+              The Secrets Store CSI provider mounts Configs and File fields. Driver rotation updates
+              files; your application reloads them.
+            </p>
+            <a class="text-link" href="/en/docs/configra/kubernetes/#csi-file-mounts">
+              Set up the CSI provider →
+            </a>
+          </article>
+          <article>
+            <span class="index-label">KUBERNETES SYNC</span>
+            <h3>Sync to a Secret or ConfigMap</h3>
+            <p>
+              Use native volumes or envFrom. Volume updates follow Kubernetes behavior;
+              environment-variable changes require Pod replacement.
+            </p>
+            <a class="text-link" href="/en/docs/configra/kubernetes/#native-object-sync">
+              Use native synchronization →
+            </a>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="section container capabilities">
+      <div class="capability-copy">
+        <p class="eyebrow">CONFIGS & VAULT</p>
+        <h2>Reference Vault fields in configuration</h2>
+        <p>
+          Configra resolves current field values for the requested environment. Applications receive
+          the complete document.
+        </p>
+        <ul>
+          <li>Manage configuration and field variants by environment</li>
+          <li>Inspect history, compare changes and clone configuration</li>
+          <li>Explicitly reveal or conceal sensitive values</li>
+          <li>Investigate reads and changes through Access and Audit</li>
+        </ul>
+        <a class="text-link" href="/en/docs/configra/configuration/">
+          Read about Configs and Vault →
+        </a>
+      </div>
+      <a
+        class="detail-shot"
+        href="/assets/configra/vault-dark.png"
+        aria-label="Open the dark workspace screenshot"
+      >
+        <img
+          src="/assets/configra/vault-dark.png"
+          width="1440"
+          height="1000"
+          alt="Configra dark workspace with Vault fields and revision navigation."
+          loading="lazy"
+        />
+      </a>
+    </section>
+    <section class="section container credential-section">
+      <div class="credential-image">
+        <a href="/assets/configra/authorities.png" aria-label="Open the client CA screenshot">
+          <img
+            src="/assets/configra/authorities.png"
+            width="1280"
+            height="750"
+            alt="Administration lists managed client certificate authorities with issuance and revocation controls."
+            loading="lazy"
+          />
+        </a>
+      </div>
+      <div class="capability-copy">
+        <p class="eyebrow">CLIENT CERTIFICATES</p>
+        <h2>Create CAs and issue client certificates</h2>
+        <p>
+          Generate a CA and issue client identities in the workspace. CA signing keys are retained
+          encrypted; private exports are returned only with the original creation response.
+        </p>
+        <a class="text-link" href="/en/docs/configra/certificates/">
+          Manage client certificates →
+        </a>
+      </div>
+    </section>
+    <section class="boundary-note container">
+      <span class="tag">Before deployment</span>
+      <div>
+        <h3>Permission scope and release status</h3>
+        <p>
+          Machine Tokens grant Environment-wide access, not per-resource isolation. Configra does
+          not provide dynamic database credentials, HSM/KMS custody or application restarts. This is
+          a preview release; production performance acceptance is incomplete.
+        </p>
+        <a class="text-link" href="/en/docs/configra/security/">
+          Read the security and release status →
+        </a>
+      </div>
+    </section>
+    <section class="docs-banner container">
+      <div>
+        <p class="eyebrow">QUICKSTART</p>
+        <h2>Run Configra locally</h2>
+        <p>Use the development stack to explore the UI, create configuration and test reads.</p>
+      </div>
+      <a class="button button-light" href="/en/docs/configra/quickstart/">
+        Open the quickstart →
+      </a>
+    </section>
+  </main>
+</Site>

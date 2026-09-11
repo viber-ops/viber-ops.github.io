@@ -1,17 +1,22 @@
 ---
 import '../styles/global.css';
+import { localeFromPath, localizedPath, messages } from '../data/i18n';
 interface Props {
   title: string;
   description: string;
   section?: string;
 }
 const { title, description, section = '' } = Astro.props;
-const notFound = Astro.url.pathname === '/404/' || Astro.url.pathname === '/404.html';
-const canonical = new URL(notFound ? '/404.html' : Astro.url.pathname, Astro.site);
+const locale = localeFromPath(Astro.url.pathname);
+const t = messages[locale];
+const opposite = locale === 'en' ? 'zh-CN' : 'en';
+const href = (path: string) => localizedPath(path, locale);
+const notFound = /\/404(?:\/|\.html)$/.test(Astro.url.pathname);
+const canonical = new URL(localizedPath(Astro.url.pathname, locale), Astro.site);
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -20,6 +25,21 @@ const canonical = new URL(notFound ? '/404.html' : Astro.url.pathname, Astro.sit
     {notFound && <meta name="robots" content="noindex" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      hreflang="zh-CN"
+      href={new URL(localizedPath(Astro.url.pathname, 'zh-CN'), Astro.site)}
+    />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href={new URL(localizedPath(Astro.url.pathname, 'en'), Astro.site)}
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={new URL(localizedPath(Astro.url.pathname, 'zh-CN'), Astro.site)}
+    />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -29,27 +49,36 @@ const canonical = new URL(notFound ? '/404.html' : Astro.url.pathname, Astro.sit
   </head>
   <body>
     <a href="#main" class="skip-link">
-      跳转到正文
+      {t.skip}
     </a>
     <header class="site-header">
       <div class="header-inner">
-        <a class="brand" href="/" aria-label="Viber Ops 首页">
+        <a class="brand" href={href('/')} aria-label={t.home}>
           <span class="brand-symbol" aria-hidden="true">
             v<span>_</span>
           </span>
           viber<span class="brand-ops">ops</span>
         </a>
-        <nav class="desktop-nav" aria-label="主导航">
-          <a href="/#products" aria-current={section === 'products' ? 'page' : undefined}>
-            产品
+        <nav class="desktop-nav" aria-label={t.primary}>
+          <a href={href('/#products')} aria-current={section === 'products' ? 'page' : undefined}>
+            {t.products}
           </a>
-          <a href="/docs/configra/" aria-current={section === 'docs' ? 'page' : undefined}>
-            文档
+          <a href={href('/docs/configra/')} aria-current={section === 'docs' ? 'page' : undefined}>
+            {t.docs}
           </a>
-          <a href="/docs/configra/installation/">下载</a>
+          <a href={href('/docs/configra/installation/')}>{t.download}</a>
         </nav>
         <a class="github-link" href="https://github.com/viber-ops">
           GitHub <span aria-hidden="true">↗</span>
+        </a>
+        <a
+          class="language-link"
+          href={localizedPath(Astro.url.pathname, opposite)}
+          lang={opposite}
+          hreflang={opposite}
+          aria-label={locale === 'en' ? '切换到中文' : 'Switch to English'}
+        >
+          {locale === 'en' ? '中文' : 'English'}
         </a>
       </div>
     </header>
@@ -57,15 +86,16 @@ const canonical = new URL(notFound ? '/404.html' : Astro.url.pathname, Astro.sit
     <footer class="site-footer">
       <div class="footer-inner">
         <div>
-          <a href="/" class="footer-brand">
+          <a href={href('/')} class="footer-brand">
             viber ops<span aria-hidden="true">_</span>
           </a>
-          <p>产品介绍与使用文档</p>
+          <p>{t.footerDescription}</p>
         </div>
-        <nav aria-label="页脚导航">
-          <a href="/configra/">Configra</a>
-          <a href="/docs/configra/">使用文档</a>
+        <nav aria-label={t.footer}>
+          <a href={href('/configra/')}>Configra</a>
+          <a href={href('/docs/configra/')}>{t.guide}</a>
           <a href="https://github.com/viber-ops">GitHub ↗</a>
+          <a href="/license.txt">Apache-2.0</a>
         </nav>
       </div>
     </footer>

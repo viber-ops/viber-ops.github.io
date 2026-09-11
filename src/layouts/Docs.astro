@@ -1,45 +1,50 @@
 ---
 import Site from './Site.astro';
-import { docGroups, docHref, release, sourceURL } from '../data/site';
+import { docGroupsFor, docHref, release, sourceURL } from '../data/site';
+import { localeFromPath, localizedPath, messages } from '../data/i18n';
 interface Props {
   frontmatter: { title: string; description: string; source?: string };
   headings?: { depth: number; slug: string; text: string }[];
 }
 const { frontmatter, headings = [] } = Astro.props;
+const locale = localeFromPath(Astro.url.pathname);
+const t = messages[locale];
+const docGroups = docGroupsFor(locale);
+const href = (slug: string) => docHref(slug, locale);
 const pages = docGroups.flatMap((group) => group.pages);
-const current = pages.findIndex((page) => docHref(page.slug) === Astro.url.pathname);
+const current = pages.findIndex((page) => href(page.slug) === Astro.url.pathname);
 const previous = pages[current - 1];
 const next = pages[current + 1];
 const toc = headings.filter((heading) => heading.depth === 2);
 ---
 
 <Site
-  title={`${frontmatter.title} — Configra 文档 | Viber Ops`}
+  title={`${frontmatter.title} — Configra ${t.docs} | Viber Ops`}
   description={frontmatter.description}
   section="docs"
 >
   <div class="docs-topbar">
     <div class="container">
-      <a href="/configra/">
-        <span class="mini-mark">c</span> Configra <span class="topbar-divider">/</span> 使用文档
+      <a href={localizedPath('/configra/', locale)}>
+        <span class="mini-mark">c</span> Configra <span class="topbar-divider">/</span> {t.guide}
       </a>
       <span class="tag">{release}</span>
     </div>
   </div>
   <div class="docs-layout">
-    <aside class="docs-sidebar" aria-label="文档目录">
+    <aside class="docs-sidebar" aria-label={t.docNav}>
       <details class="docs-menu" open>
         <summary>
-          浏览文档 <span aria-hidden="true">⌄</span>
+          {t.browse} <span aria-hidden="true">⌄</span>
         </summary>
-        <nav aria-label="Configra 文档">
+        <nav aria-label={`Configra ${t.docs}`}>
           {docGroups.map((group) => (
             <div class="nav-group">
               <p>{group.label}</p>
               {group.pages.map((page) => (
                 <a
-                  href={docHref(page.slug)}
-                  aria-current={docHref(page.slug) === Astro.url.pathname ? 'page' : undefined}
+                  href={href(page.slug)}
+                  aria-current={href(page.slug) === Astro.url.pathname ? 'page' : undefined}
                 >
                   {page.title}
                 </a>
@@ -49,12 +54,12 @@ const toc = headings.filter((heading) => heading.depth === 2);
         </nav>
       </details>
       <a class="sidebar-source" href="https://github.com/viber-ops/configra">
-        在 GitHub 查看项目 ↗
+        {t.repository}
       </a>
     </aside>
     <main id="main" class="doc-main">
       <div class="doc-breadcrumb">
-        <a href="/docs/configra/">Configra</a>
+        <a href={href('')}>Configra</a>
         <span aria-hidden="true">/</span>
         <span>{frontmatter.title}</span>
       </div>
@@ -62,60 +67,67 @@ const toc = headings.filter((heading) => heading.depth === 2);
         <h1>{frontmatter.title}</h1>
         <p>{frontmatter.description}</p>
       </header>
-      <article class="prose">
+      <article
+        class="prose"
+        data-copy={t.copy}
+        data-copy-label={t.copyLabel}
+        data-copied={t.copied}
+        data-copy-failed={t.copyFailed}
+      >
         <slot />
       </article>
       <div class="doc-source">
-        <span>对应版本 {release}</span>
-        {frontmatter.source && (
-          <a href={`${sourceURL}/${frontmatter.source}`}>查看实现与详细说明 ↗</a>
-        )}
+        <span>
+          {t.version} {release}
+        </span>
+        {frontmatter.source && <a href={`${sourceURL}/${frontmatter.source}`}>{t.source}</a>}
       </div>
-      <nav class="doc-pagination" aria-label="前后篇文档">
+      <nav class="doc-pagination" aria-label={t.pagination}>
         {previous ? (
-          <a href={docHref(previous.slug)}>
-            <span>← 上一篇</span>
+          <a href={href(previous.slug)}>
+            <span>{t.previous}</span>
             <strong>{previous.title}</strong>
           </a>
         ) : (
           <div />
         )}
         {next && (
-          <a href={docHref(next.slug)} class="next">
-            <span>下一篇 →</span>
+          <a href={href(next.slug)} class="next">
+            <span>{t.next}</span>
             <strong>{next.title}</strong>
           </a>
         )}
       </nav>
     </main>
-    <aside class="doc-toc" aria-label="本页目录">
-      <p>本页内容</p>
+    <aside class="doc-toc" aria-label={t.onPage}>
+      <p>{t.onPage}</p>
       {toc.map((heading) => (
         <a href={`#${heading.slug}`}>{heading.text}</a>
       ))}
       <a class="toc-help" href="https://github.com/viber-ops/configra/issues">
-        遇到问题？反馈到 GitHub ↗
+        {t.feedback}
       </a>
     </aside>
   </div>
   <script>
     const menu = document.querySelector<HTMLDetailsElement>('.docs-menu');
     if (menu && matchMedia('(max-width: 900px)').matches) menu.open = false;
+    const labels = document.querySelector<HTMLElement>('article.prose')?.dataset;
     for (const pre of document.querySelectorAll('article pre')) {
       const button = document.createElement('button');
       button.className = 'copy-code';
       button.type = 'button';
-      button.textContent = '复制';
-      button.setAttribute('aria-label', '复制代码');
+      button.textContent = labels?.copy ?? 'Copy';
+      button.setAttribute('aria-label', labels?.copyLabel ?? 'Copy code');
       button.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(pre.querySelector('code')?.textContent ?? '');
-          button.textContent = '已复制';
+          button.textContent = labels?.copied ?? 'Copied';
         } catch {
-          button.textContent = '请手动复制';
+          button.textContent = labels?.copyFailed ?? 'Select and copy the code manually';
         }
         setTimeout(() => {
-          button.textContent = '复制';
+          button.textContent = labels?.copy ?? 'Copy';
         }, 2000);
       });
       pre.append(button);

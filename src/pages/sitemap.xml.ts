@@ -1,11 +1,13 @@
 import { docGroups, docHref } from '../data/site';
+import { localizedPath } from '../data/i18n';
 export function GET() {
   const paths = [
     '/',
     '/configra/',
     ...docGroups.flatMap((group) => group.pages.map((page) => docHref(page.slug))),
   ];
-  const urls = paths
+  const allPaths = [...paths, ...paths.map((path) => localizedPath(path, 'en'))];
+  const urls = allPaths
     .map((path) => `<url><loc>https://viber-ops.github.io${path}</loc></url>`)
     .join('');
   return new Response(

@@ -13,14 +13,31 @@ MySQL 包含完整服务状态，必须配合单独保存的 Master Key 与启�
 
 ## MySQL 恢复流程
 
-`deploy/backup` 提供 MySQL 8.0.22 的备份与恢复脚本。通过挂载的 `--defaults-extra-file` 传入凭据，不在命令行直接写密码。下列命令从该目录运行：
+`deploy/backup` 提供 MySQL 8.0.22 的备份与恢复脚本。执行前需要 MySQL 8.0.22 客户端工具，并挂载 `/run/secrets/mysql.cnf`，例如：
+
+```ini
+[client]
+host=mysql.example.internal
+port=3306
+protocol=tcp
+user=configra_backup
+password=replace-through-secret-volume
+```
+
+将主机和账号替换为自己的配置，通过受控 Secret 提供密码；不要把真实文件提交到 Git。备份账号需要读取目标库的权限；恢复账号需要创建、写入和在失败时删除指定的新目标库。`/backup` 必须是可写的持久备份挂载。
+
+以下命令从仓库根目录开始。先进入工具目录并创建新的空备份目录；恢复库名也必须未被使用：
 
 ```sh
+cd deploy/backup
+mkdir -m 700 /backup/new-point
 sh mysql-backup.sh /run/secrets/mysql.cnf configra /backup/new-point
 sh mysql-restore.sh /run/secrets/mysql.cnf /backup/new-point configra_restore_trial
 ```
 
 备份使用单事务一致性导出，生成压缩 SQL 与哈希清单，拒绝覆盖已有输出。恢复先校验清单，只创建新数据库，不覆盖现有数据库。导出期间不要并发执行 schema 升级。
+
+成功后，备份目录包含 `mysql.sql.gz` 和 `manifest.sha256`。重复执行时应换一个备份目录和恢复库名，不要删除已有备份来让命令通过。当前脚本不用于 8.0.22 与 8.4 的跨版本迁移。
 
 恢复后，使用单独恢复的原 Master Key 启动隔离实例。只有在 `/health/ready` 成功、配置和证书读取经过验证后，才能提升该数据库为使用目标。
 

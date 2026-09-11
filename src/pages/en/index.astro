@@ -1,0 +1,114 @@
+---
+import Site from '../../layouts/Site.astro';
+import { products } from '../../data/site';
+---
+
+<Site
+  title="Viber Ops — Self-hosted operations tools"
+  description="Viber Ops products and documentation. Configra manages application configuration, sensitive values and client certificates, with Go SDK and Kubernetes integrations."
+  section="products"
+>
+  <main id="main">
+    <section class="home-hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="status-dot" aria-hidden="true"></span> VIBER OPS
+          </p>
+          <h1>
+            Self-hosted tools.
+            <br />
+            <span>For developers and operators.</span>
+          </h1>
+          <p class="hero-intro">
+            Configra is our first product: application configuration and sensitive-value management,
+            with a Go SDK and Kubernetes integrations.
+          </p>
+          <div class="actions">
+            <a class="button button-light" href="/en/configra/">
+              Explore Configra <span aria-hidden="true">→</span>
+            </a>
+            <a class="text-link light-link" href="/en/docs/configra/">
+              Read the docs ↗
+            </a>
+          </div>
+          <div class="hero-note">
+            <span>SELF-HOSTED</span>
+            <span>GO SDK</span>
+            <span>KUBERNETES</span>
+          </div>
+        </div>
+        <div class="hero-product">
+          <div class="window-caption">
+            <span>
+              <span class="mini-mark">c</span> Configra <span class="preview-pill">Preview</span>
+            </span>
+            <span class="window-label">VAULT WORKSPACE</span>
+          </div>
+          <a href="/en/configra/" aria-label="Explore Configra configuration and Vault management">
+            <img
+              src="/assets/configra/vault-light.png"
+              alt="Configra Vault workspace: resource navigation, item list, environment variants and field details. The screenshot uses demo data."
+              width="1440"
+              height="1000"
+              fetchpriority="high"
+            />
+          </a>
+          <div class="product-caption">
+            <span>
+              <span class="status-dot" aria-hidden="true"></span> Configra Vault workspace
+            </span>
+            <span>DEMO DATA</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="products" class="section container">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PRODUCTS</p>
+          <h2>Products</h2>
+        </div>
+      </div>
+      {products.map((product) => (
+        <article class="product-row">
+          <div class="product-icon" aria-hidden="true">
+            c<span>_</span>
+          </div>
+          <div class="product-description">
+            <p class="eyebrow">{product.category}</p>
+            <h3>
+              <a href={`/en${product.href}`}>{product.name}</a>
+              <span class="tag">{product.status}</span>
+            </h3>
+            <p>{product.descriptionEn}</p>
+            <div class="inline-tags">
+              <span>YAML / JSON</span>
+              <span>Vault</span>
+              <span>mTLS</span>
+              <span>Kubernetes</span>
+            </div>
+          </div>
+          <div class="product-links">
+            <a class="button button-primary" href={`/en${product.href}`}>
+              View product →
+            </a>
+            <a class="text-link" href="/en/docs/configra/quickstart/">
+              Try it locally
+            </a>
+          </div>
+        </article>
+      ))}
+    </section>
+    <section class="docs-banner container">
+      <div>
+        <p class="eyebrow">DOCUMENTATION</p>
+        <h2>Configra documentation</h2>
+        <p>Local setup, application integration, Kubernetes deployment and backups.</p>
+      </div>
+      <a class="button button-light" href="/en/docs/configra/quickstart/">
+        Open the quickstart →
+      </a>
+    </section>
+  </main>
+</Site>

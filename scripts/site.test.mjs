@@ -16,7 +16,7 @@ const pages = walk(root).filter((path) => path.endsWith('.html'));
 const origin = 'https://viber-ops.github.io';
 
 test('all product and documentation routes are generated', () => {
-  for (const route of [
+  const routes = [
     '',
     'configra',
     ...[
@@ -32,8 +32,11 @@ test('all product and documentation routes are generated', () => {
       'operations',
       'security',
     ].map((slug) => `docs/configra/${slug}`),
-  ]) {
-    assert.ok(existsSync(join(root, route, 'index.html')), `Missing ${route}`);
+  ];
+  for (const locale of ['', 'en']) {
+    for (const route of routes) {
+      assert.ok(existsSync(join(root, locale, route, 'index.html')), `Missing ${locale}/${route}`);
+    }
   }
   assert.ok(existsSync(join(root, '404.html')));
   assert.ok(existsSync(join(root, 'sitemap.xml')));
@@ -44,7 +47,8 @@ for (const page of pages) {
   const html = readFileSync(page, 'utf8');
   test(`${relative}: metadata, landmarks, links, anchors and assets`, () => {
     assert.equal((html.match(/<h1(?:\s|>)/g) ?? []).length, 1, 'Exactly one page heading');
-    assert.match(html, /<html[^>]*lang="zh-CN"/);
+    const english = relative.startsWith('/en/');
+    assert.match(html, new RegExp(`<html[^>]*lang="${english ? 'en' : 'zh-CN'}"`));
     assert.match(html, /<meta\s+name="description"\s+content="[^"<]+"/);
     assert.match(html, /<main[^>]*id="main"/);
     assert.doesNotMatch(
@@ -67,11 +71,54 @@ for (const page of pages) {
     for (const match of html.matchAll(/<img\b[^>]*>/g)) {
       assert.match(match[0], /\balt="[^"]+"/, 'Images must have useful alternative text');
     }
+    const switchLink = html.match(/<a\b[^>]*class="language-link"[^>]*href="([^"]+)"[^>]*>/);
+    assert.ok(switchLink, 'Language switch is present without JavaScript');
+    const translatedPath = english
+      ? relative === '/en/404/'
+        ? '/404.html'
+        : relative.slice(3)
+      : relative === '/404.html'
+        ? '/en/404/'
+        : `/en${relative}`;
+    assert.equal(switchLink[1], translatedPath, 'Language switch keeps the current page');
+    assert.match(html, /hreflang="zh-CN"/);
+    assert.match(html, /hreflang="en"/);
+    if (english) {
+      const content = html
+        .replace(/<a\b[^>]*class="language-link"[^>]*>[\s\S]*?<\/a>/g, '')
+        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '')
+        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, '')
+        .replace(/<[^>]*>/g, '');
+      assert.doesNotMatch(
+        content,
+        /[\u3400-\u9fff]/,
+        'English pages must not contain untranslated visible copy',
+      );
+      for (const match of html.matchAll(/<a\b[^>]*>/g)) {
+        if (match[0].includes('language-link')) continue;
+        const href = match[0].match(/href="([^"]+)"/)?.[1];
+        if (href?.startsWith('/') && !href.startsWith('/assets/') && href !== '/license.txt') {
+          assert.ok(href.startsWith('/en/'), `English navigation crossed locale: ${href}`);
+        }
+      }
+    }
   });
 }
+
+test('homepages omit the removed slogan section', () => {
+  for (const page of ['index.html', 'en/index.html']) {
+    const html = readFileSync(join(root, page), 'utf8');
+    assert.doesNotMatch(html, /class="principles|OWN YOUR RUNTIME|KNOW THE BOUNDARIES|GET TO WORK/);
+  }
+});
 
 test('public assets contain no credential exports or key material', () => {
   for (const path of walk(root)) {
     assert.doesNotMatch(path, /\.(?:pem|key|p12|pfx|zip)$/i);
   }
+});
+
+test('the published site includes its license and notice', () => {
+  assert.match(readFileSync(join(root, 'license.txt'), 'utf8'), /Version 2.0, January 2004/);
+  assert.match(readFileSync(join(root, 'notice.txt'), 'utf8'), /Viber Ops Authors/);
 });
