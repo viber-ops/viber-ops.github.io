@@ -69,6 +69,47 @@ test('Chinese and English guides keep executable examples in sync', () => {
   }
 });
 
+test('overview examples keep the same keys and match their environment values', () => {
+  for (const locale of ['', 'en/']) {
+    const source = readFileSync(join(sourceRoot, `src/pages/${locale}docs/configra/index.md`), 'utf8');
+    const blocks = exampleBlocks(source);
+    const yaml = blocks.filter((block) => block.language === 'yaml');
+    const json = blocks.filter((block) => block.language === 'json').map((block) => JSON.parse(block.code));
+    assert.equal(yaml.length, 4, 'One YAML source and three resolved examples');
+    assert.equal(json.length, 2, 'JSON source and production result');
+    const rows = source.split('\n').map((line) => line.split('|').slice(1, -1)
+      .map((cell) => cell.trim().replaceAll('`', '')))
+      .filter((cells) => ['development', 'testing', 'production'].includes(cells[0]));
+    assert.deepEqual(rows.map((row) => row[0]), ['development', 'testing', 'production']);
+    const fields = ['host', 'password', 'port', 'username'];
+    assert.deepEqual(Object.keys(json[0]), ['database']);
+    assert.deepEqual(Object.keys(json[0].database).sort(), fields);
+    assert.equal(json[0].database.port, 3306);
+    for (const field of ['host', 'username', 'password']) {
+      const reference = `{vault.platform.database.${field}}`;
+      assert.equal(json[0].database[field], reference);
+      assert.ok(yaml[0].code.includes(reference));
+    }
+    // These documented YAML examples intentionally contain one flat database map.
+    // The production resolver is checked separately against the same snippets.
+    rows.forEach(([environment, host, username, password], index) => {
+      const code = yaml[index + 1].code;
+      assert.equal(code.split('\n')[0], 'database:');
+      assert.deepEqual([...code.matchAll(/^  (\w+):/gm)].map((match) => match[1]).sort(), fields);
+      for (const [key, value] of Object.entries({ host, username, password })) {
+        assert.ok(code.includes(`  ${key}: '${value}'`), `${locale}${environment}.${key}`);
+      }
+      assert.ok(code.includes('  port: 3306'));
+      assert.doesNotMatch(code, /\{vault\./);
+      if (environment === 'production') {
+        assert.deepEqual(json[1], { database: { host, username, password, port: 3306 } });
+      }
+    });
+    assert.ok(blocks.some((block) => block.language === 'go' &&
+      block.code.includes('ReadResolvedConfig(ctx, "testing", "payment", "")')));
+  }
+});
+
 test('walkthrough separates API startup, demo shutdown and database restore', () => {
   for (const locale of ['', 'en/']) {
     const quickstart = readFileSync(join(sourceRoot, `src/pages/${locale}docs/configra/quickstart.md`), 'utf8');

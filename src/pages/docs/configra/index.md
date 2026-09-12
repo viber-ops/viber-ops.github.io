@@ -1,13 +1,119 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: 认识 Configra
-description: Configra 是什么、适合谁用，以及第一次应该从哪里开始。
+description: 看同样的 YAML / JSON 引用，如何按开发、测试和生产环境填入不同的值。
 source: README.md
 ---
 
-Configra 是一个需要自己部署的配置管理服务。你在网页里管理应用配置、数据库密码和证书，应用再从 Configra 读取需要的内容。
+Configra 是一个自己部署的配置管理服务。你在 YAML / JSON 中引用保存在 Configra Vault 里的值；应用读取时指定环境，Configra 把引用替换为那个环境的实际值，再返回完整配置。
 
-例如，支付服务在开发环境和生产环境使用不同的数据库密码。你可以在 Configra 里分别保存这两组值，让应用按环境读取，不必把密码写进代码仓库。
+**从开发切到测试或生产，换的是读取环境和得到的值，不需要改字段名或引用里的 key。** 下面用支付服务连接数据库的例子说明。
+
+## 例子：同样的配置，读取不同环境的值
+
+### 1. 先在 Vault 保存三组值
+
+创建 Vault 条目 `platform.database`，也就是 Namespace 为 `platform`、Item key 为 `database`。添加 `host`、`username` 两个 Text 字段和 `password` Secret 字段，再为三个环境分别设置值：
+
+| 环境（Environment） | host | username | password |
+| --- | --- | --- | --- |
+| `development` | `mysql.dev.example` | `payment_dev` | `demo-dev-only` |
+| `testing` | `mysql.test.example` | `payment_test` | `demo-test-only` |
+| `production` | `mysql.prod.example` | `payment_prod` | `demo-prod-only` |
+
+这些地址和密码都是演示值，不要用于真实数据库。在界面中，每组值对应一个 Variant，并绑定到表中的环境；三个环境都使用同样的字段 key。
+
+### 2. 配置中只写一套引用
+
+在配置（Configs）中保存下面的 YAML，Config key 使用 `payment`：
+
+```yaml
+database:
+  host: '{vault.platform.database.host}'
+  port: 3306
+  username: '{vault.platform.database.username}'
+  password: '{vault.platform.database.password}'
+```
+
+先为 `development` 保存，再把配置克隆到 `testing` 和 `production`。三个环境下的 `payment` 可以使用完全相同的文本；Configra 不会自动给尚未创建的环境复制配置。以后修改某个环境的配置，也不会自动改动其他环境的配置文本。
+
+这里不需要 `password_dev`、`password_test` 这样的字段，也不用把引用改成不同名称。`port: 3306` 是直接写在配置中的普通值，会原样保留。
+
+### 3. 应用指定环境，拿到填好值的配置
+
+读取 `development` 环境的 `payment`，配置内容是：
+
+```yaml
+database:
+  host: 'mysql.dev.example'
+  port: 3306
+  username: 'payment_dev'
+  password: 'demo-dev-only'
+```
+
+改为读取 `testing`，得到：
+
+```yaml
+database:
+  host: 'mysql.test.example'
+  port: 3306
+  username: 'payment_test'
+  password: 'demo-test-only'
+```
+
+改为读取 `production`，得到：
+
+```yaml
+database:
+  host: 'mysql.prod.example'
+  port: 3306
+  username: 'payment_prod'
+  password: 'demo-prod-only'
+```
+
+应用始终读取 `database.host`、`database.username` 和 `database.password`，不用根据环境换 key，也不需要自己解析 `{vault...}`。上面只展示配置正文；Go SDK 中对应 `result.Content`，响应还会带版本等信息。实际密码不要写入日志。
+
+## 如果应用使用 JSON
+
+创建配置时选择 JSON 格式，使用同样的引用规则：
+
+```json
+{
+  "database": {
+    "host": "{vault.platform.database.host}",
+    "password": "{vault.platform.database.password}",
+    "port": 3306,
+    "username": "{vault.platform.database.username}"
+  }
+}
+```
+
+读取生产环境后，应用收到的配置正文是：
+
+```json
+{
+  "database": {
+    "host": "mysql.prod.example",
+    "password": "demo-prod-only",
+    "port": 3306,
+    "username": "payment_prod"
+  }
+}
+```
+
+这是上面 YAML 的另一种写法，不需要把两份都保存。返回正文的格式由保存的 Config 决定，不是读取时自动把 YAML 转成 JSON。引用必须占据整个字符串值；`"password={vault...}"` 这种拼接写法不支持。
+
+## 环境在哪里指定
+
+以已经初始化的 Go Client 为例，下面这次调用读取测试环境：
+
+```go
+result, err := client.ReadResolvedConfig(ctx, "testing", "payment", "")
+```
+
+把 `testing` 换成 `development` 或 `production` 即可，`payment` 和配置内的 key 不变。实际项目可以从自己的部署设置中取得环境名，再传给 SDK；完整初始化和错误处理见 [Go SDK](/docs/configra/go-sdk/)。
+
+使用 Kubernetes 时，在读取对象里设置 `environment: testing`，`config` 仍为 `payment`。Configra 不会根据集群名、Namespace 或机器上的 `ENV` 变量自动猜环境。无论哪种方式，Token 都必须有对应环境的读取权限；缺少环境值时会报错，不会回退到另一套环境的密码。
 
 ## 先从哪里开始
 
