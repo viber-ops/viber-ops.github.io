@@ -26,7 +26,8 @@ remote fonts, or browser framework runtime is required.
 
 ## Add a product or guide
 
-- Register products and document navigation in `src/data/site.ts`.
+- Register products and document navigation in `src/data/site.ts`. Product
+  descriptions, categories and release labels need both language values.
 - Add a product page under `src/pages/`, reusing `Site.astro` and the shared tokens.
 - Configra guides live in `src/pages/docs/configra/*.md`, using `Docs.astro`.
 - English guides live in `src/pages/en/docs/configra/`; every Chinese route has

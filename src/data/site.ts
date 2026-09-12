@@ -9,7 +9,9 @@ export const products = [
     descriptionEn:
       'Manage settings, passwords and certificates for development, testing and production in a web interface. Review changes and connect applications through Go or Kubernetes.',
     status: 'Preview',
+    statusZh: '预发布',
     category: 'CONFIGURATION & SECRETS',
+    categoryZh: '配置管理',
   },
 ];
 export const docGroups = [

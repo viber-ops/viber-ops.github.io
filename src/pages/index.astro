@@ -75,10 +75,10 @@ import { products } from '../data/site';
             c<span>_</span>
           </div>
           <div class="product-description">
-            <p class="eyebrow">配置管理</p>
+            <p class="eyebrow">{product.categoryZh}</p>
             <h3>
               <a href={product.href}>{product.name}</a>
-              <span class="tag">预发布</span>
+              <span class="tag">{product.statusZh}</span>
             </h3>
             <p>{product.description}</p>
             <div class="inline-tags">
