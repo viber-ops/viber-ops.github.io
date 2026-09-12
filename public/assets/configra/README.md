@@ -1,7 +1,8 @@
 # Configra screenshots
 
 Captured from the redesigned Configra management UI using synthetic test fixtures
-on 2026-09-11. Original evidence: `configra/docs/ui-review/`.
+on 2026-09-11. This directory is the canonical checked-in screenshot set.
+The original copies remain in the [Configra source snapshot](https://github.com/viber-ops/configra/tree/43ea1dddf86fa1dccc9a7f4b2102f4caa9c79b24/docs/ui-review).
 
 - `vault-light.png`: 1440 × 1000, light Vault workspace.
 - `vault-dark.png`: 1440 × 1000, dark Vault workspace.
