@@ -1,15 +1,17 @@
 ---
 layout: ../../../layouts/Docs.astro
 title: Go SDK
-description: 用 configra-go 读取最终配置、文件或持续更新的 Viper 快照。
+description: 从 Go 程序读取配置；先完成一次读取，需要定时更新时再使用 Viper。
 ---
 
 ## 安装
 
-需要 Go 1.25.13 或更新版本。SDK 是 Go 库，不需要下载对应操作系统的服务端二进制。
+本篇面向接入 Go 应用的研发人员。服务还没启动时，先完成[本地体验](/docs/configra/quickstart/)的客户端步骤。
+
+需要 Go 1.25.13 或更新版本。在你已有的 Go 项目目录执行下面的命令。SDK 是 Go 库，不需要下载服务端的 macOS / Linux 程序：
 
 ```sh
-go get github.com/viber-ops/configra-go@v0.1.0-rc.1
+go get github.com/viber-ops/configra-go@v0.1.0-rc.2
 ```
 
 先准备 API HTTPS 地址、Environment Token、已签发的客户端证书与私钥。若服务器证书由内部 CA 签发，还需要服务器 CA 公共证书。
@@ -33,7 +35,7 @@ if err != nil {
 // result.ETag 可传给下一次请求，未变化时返回 ErrNotModified。
 ```
 
-导入 `github.com/viber-ops/configra-go`；`ctx` 来自应用的请求或生命周期。[完整可编译示例](https://github.com/viber-ops/configra-go/blob/v0.1.0-rc.1/examples/basic/main.go)只打印版本元数据，不打印配置明文。
+导入 `github.com/viber-ops/configra-go`；`ctx` 来自应用的请求或生命周期。[完整可编译示例](https://github.com/viber-ops/configra-go/blob/v0.1.0-rc.2/examples/basic/main.go)只打印版本元数据，不打印配置明文。
 
 ## 按场景选择入口
 
@@ -43,11 +45,13 @@ if err != nil {
 | 一个部署配置文件          | `NewClientFromFile("configra.yaml")` |
 | 自己的配置系统或内存参数  | `NewClient(ClientOptions{...})`      |
 
-三个入口最终都调用同一套 Client 初始化与校验。选一个即可，不需要理解优先级、合并顺序或注册 Provider。
+选一个入口即可。它们使用相同的校验规则，不会把环境变量和配置文件悄悄合并。
 
 ## 从环境变量初始化
 
-由部署系统设置连接信息。Token 使用环境变量和文件二选一；文件方式方便挂载 Kubernetes Secret：
+下面运行 SDK 仓库里的现成示例：先克隆 `configra-go` 的 rc.2 标签并进入该目录；已按本地体验克隆过，就直接进入已有目录。把地址和 `/secure/` 路径改成实际值。自己的应用使用相同环境变量，但启动命令换成自己的程序。
+
+Token 直接传值和从文件读取二选一。文件中只放 Token，不加引号；Kubernetes Secret 挂载可以使用这种方式：
 
 ```sh
 export CONFIGRA_URL=https://configra-api.example.internal:9443
@@ -112,9 +116,9 @@ client, err := configra.NewClient(configra.ClientOptions{
 | Unknown field / duplicated field          | 根据错误行号修正拼写或重复项，不存在静默覆盖规则                         |
 | TLS file options combined with TLSConfig  | 普通文件选项与高级 TLSConfig 二选一                                      |
 
-网络连通性、服务器信任与服务端授权在第一次读取时验证，不在构造函数中偷偷发请求。遇到 `x509: certificate signed by unknown authority` 时，应核对 API **服务器** CA；不要关闭验证。HTTP 401 / 403 优先检查 Token 的有效期、Environment 范围以及客户端证书 / CA 状态。
+网络连通性、服务器信任与服务端授权在第一次读取时验证，创建 Client 本身不会连接服务器。遇到 `x509: certificate signed by unknown authority` 时，应核对 API **服务器** CA；不要关闭验证。HTTP 401 / 403 优先检查 Token 的有效期、Environment 范围以及客户端证书 / CA 状态。
 
-设置文件上限 64 KiB，Token 文件 1 KiB，客户端证书或组合 PEM 128 KiB、单独私钥 64 KiB、服务器 CA 集合 1 MiB。不是通过放大本地读取限制来解决错误的文件类型。
+设置文件上限 64 KiB，Token 文件 1 KiB，客户端证书或组合 PEM 128 KiB、单独私钥 64 KiB、服务器 CA 集合 1 MiB。文件超限时，先确认选对了文件，不要把整个导出 ZIP 当作证书文件传入。
 
 ## 文件字段与响应大小
 
@@ -127,6 +131,8 @@ file, err := client.ReadFile(ctx, "development", "platform", "database", "tls_ce
 `file.Bytes` 是原始文件字节。默认内容上限 5 MiB，`MaxContentBytes` 可以进一步降低，不能用来提高协议限制。
 
 ## Viper 快照与热更新
+
+如果应用只在启动时读取一次，可以跳过本节。Viper 是 Go 的配置解析库；这里的快照（Snapshot）是一份已下载、解析好的配置副本。
 
 `NewViperHandler` 接收 Client、Environment、Config、OnChange 和 OnError。先调用 `Load(ctx)` 并应用初始快照，再启动 `Watch(ctx)`。
 
@@ -158,6 +164,8 @@ return handler.Watch(ctx)
 Watch 默认约 30 秒、带抖动；最小间隔 5 秒，连续失败退避上限 5 分钟。获取或解析失败时保留进程内最后可用快照。它不是磁盘缓存，应用重启后的首次读取失败不能靠它恢复。
 
 ## TLS 与证书轮换
+
+普通接入不需要自己写 TLS 代码。只有需要不中断进程地更换证书时，才需要下面的高级回调。
 
 SDK 只接受 HTTPS，不允许 `InsecureSkipVerify`，也不受 `http.DefaultTransport` 被应用替换的影响。需要热轮换时，设置 `tls.Config.GetClientCertificate` 返回原子保存的证书；替换后调用 `client.CloseIdleConnections()` 使后续连接重新握手。
 

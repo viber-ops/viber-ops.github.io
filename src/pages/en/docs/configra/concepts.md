@@ -1,48 +1,65 @@
 ---
 layout: ../../../../layouts/Docs.astro
-title: Core concepts
-description: Understand environments, configuration, Vault references and the two kinds of identity.
+title: Glossary
+description: Understand workspace labels through a database configuration example.
 source: CONTEXT.md
 ---
 
+Start with three ideas: an **Environment** separates development from production, a **Config** stores the document an application reads, and **Vault** stores values referenced by that document.
+
 ## Configuration and values
 
-| Concept         | Meaning                                                      | Example                             |
-| --------------- | ------------------------------------------------------------ | ----------------------------------- |
-| Environment     | Configuration environment and machine-Token grant scope      | `production`                        |
-| Config          | A YAML / JSON document for an environment                    | `payment`                           |
-| Vault Namespace | Organizational Item identity, not a permission boundary      | `platform`                          |
-| Vault Item      | A collection identified by `(namespace, item)`               | `platform.database`                 |
-| Field           | Text, Secret or File content                                 | `username`, `password`, `tls_cert`  |
-| Variant         | Field values associated with environments                    | Production database credentials     |
-| Resolved Config | A document whose Text / Secret references have been resolved | The YAML received by an application |
+For a payment service connecting to a database:
+
+| Workspace label | Purpose | Example |
+| --- | --- | --- |
+| Environment | Identifies where the settings are used | `development`, `production` |
+| Config | Stores a YAML / JSON document | `payment` |
+| Vault Namespace | Groups Vault items; does not set permissions | `platform` |
+| Vault Item | Groups related fields | `database` |
+| Field | Stores a text value, password or file | `username`, `password` |
+| Variant | Assigns one set of field values to one or more environments | The development database account and password |
+| Resolved Config | A complete document with references replaced by values | The YAML received by the application |
+
+Namespace and Item key together identify an item, such as `platform.database`. Different Namespaces can contain items with the same key.
 
 ## References
+
+Instead of putting a password in the Config, refer to its location in Vault:
 
 ```yaml
 database:
   password: '{vault.platform.database.password}'
 ```
 
-The syntax is `{vault.<namespace>.<item>.<field>}`. A reference must occupy the whole YAML / JSON scalar. String interpolation such as `"password={vault...}"`, omitted Namespaces and historical `@vN` references are not supported.
+This selects the `password` field of the `database` item in `platform`. Reading the Config in `development` uses values assigned to development; reading it in `production` uses production values.
 
-The Config's Environment selects current values. File fields use a separate read operation and are not embedded as Text / Secret values.
+Use the complete form `{vault.<namespace>.<item>.<field>}` as the entire string value. Do not omit the Namespace or embed it in a string such as `password={vault...}`. Historical suffixes such as `@vN` are not supported.
+
+File fields have a separate read operation and cannot be embedded in this YAML. See [Configs and Vault](/en/docs/configra/configuration/).
 
 ## Human and machine identity
 
-**Humans access Management** through OIDC. Configured trusted Claims determine Admin / Viewer roles. These roles apply to the entire workspace.
+- **People open the workspace:** Configra connects to your login system through OIDC. Administrators configure which users are Admin or Viewer. Viewers cannot change data, reveal passwords or request resolved sensitive content.
+- **Applications read configuration:** an administrator supplies a Token and, by default, a client certificate. The certificate identifies the caller; the Token grants access to environments. A workspace password is not an API Token.
 
-**Machines access API** with an Environment-scoped Token and, by default, a registered valid mTLS client certificate. Only Tokens explicitly allowing Token-only access may omit that certificate. HTTPS server verification is always required.
+These permissions are not per-Config. Human roles cover the workspace; Token grants cover an entire environment.
 
 ## Revisions and ETags
 
-Configs and Vault Items have separate revision histories. A resolved read returns the Config revision, Vault revisions used and an ETag. A later request with an unchanged ETag can receive `304`.
+Saved changes have revision history. A read returns the content, the Config and Vault revisions used, and a content identifier called an ETag.
 
-One resolved document is internally consistent. Multiple objects read for a CSI mount or native target do not share one database snapshot.
+Send that ETag on a later read. If nothing changed, the server returns `304`: there is no new content to download. This is not an error. The SDK's polling handler takes care of this exchange.
+
+A single resolved document is internally consistent. Reading several documents does not guarantee they all represent the same point in time.
 
 ## Server and client certificates
 
-- **Server HTTPS certificate:** lets the caller verify the Configra API server. An independent CA or public PKI issues it.
-- **Client mTLS certificate:** lets Configra verify a machine. A managed client CA can issue it.
+| Material | Purpose | Does the application receive it? |
+| --- | --- | --- |
+| API server HTTPS certificate | Lets the application verify the server | Supply the server CA's public certificate when using an internal CA |
+| Client certificate and private key | Lets Configra verify the caller | Yes, each application uses its own pair |
+| CA signing private key | Lets the service issue client certificates | No; never distribute it to applications |
+| Master Key | Lets the service decrypt stored values and CA keys | No; only Configra uses it, with a separate protected backup |
 
-The client CA downloaded from Administration is not automatically the API server's trust root. The external Master Key decrypts persistent service state; it is neither an HTTPS key nor an API Token.
+The client CA is not the server CA. Mixing them up causes connection failures; disabling HTTPS verification is not a fix. Use the [certificate guide](/en/docs/configra/certificates/) when you need to issue credentials.

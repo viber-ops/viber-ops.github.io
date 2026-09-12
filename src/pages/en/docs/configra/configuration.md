@@ -1,13 +1,17 @@
 ---
 layout: ../../../../layouts/Docs.astro
 title: Configs and Vault
-description: Manage configuration by environment and reference shared values instead of copying them.
+description: Save YAML or JSON, keep shared passwords in Vault, and understand when applications use a change.
 source: docs/design.md
 ---
 
 ## Create configuration
 
-Create an Environment, then a YAML or JSON document in Configs. Put ordinary settings directly in the Config and shared credentials in Vault fields.
+Start after the [local quickstart](/en/docs/configra/quickstart/), or with an existing Configra login.
+
+Create an Environment, then save YAML or JSON in Configs. Put ports and log levels directly in the document. Store shared passwords in Vault and refer to them from the Config.
+
+Replace `postgres.internal` below with the application's database address. The references require fields in `platform.database` with values assigned to the selected environment:
 
 ```yaml
 server:
@@ -19,7 +23,7 @@ database:
   password: '{vault.platform.database.password}'
 ```
 
-Check the selected Environment before saving. Inspect history and compare revisions after changes. When cloning to another environment, verify the referenced Vault Item has values for that target; cloning configuration does not complete every credential migration.
+Check the selected environment so a test edit does not change production. Use history to review changes. When copying configuration to another environment, also supply its referenced Vault values; copying a Config does not automatically copy every password.
 
 ## Choose field types
 
@@ -27,7 +31,7 @@ Check the selected Environment before saving. Inspect history and compare revisi
 - **Secret:** passwords and credentials requiring an explicit reveal action.
 - **File:** certificates or other content whose original bytes must be preserved.
 
-Sensitive values are hidden by default. Revealing them creates an Access event. Avoid including real values in screenshots and issue reports. Access delivery is best effort, not a zero-loss compliance guarantee.
+Sensitive values stay hidden until you choose to reveal them. Reads produce Access events, but failed delivery can lose those records. Do not treat them as a guaranteed record of every read, or put real passwords in screenshots and issues.
 
 ![Vault fields and environment variants in the management workspace](/assets/configra/vault-light.png)
 
@@ -35,7 +39,7 @@ _Demo data: references and revisions are visible; sensitive values remain hidden
 
 ## Apply changes to applications
 
-Changing a Config or referenced Vault value does not mean a running application has adopted it. Later reads return the new content or ETag; the consumer must refresh and apply it.
+**A successful save does not mean a running application is using the new value.** Later reads receive changed content. How the application notices and adopts it depends on its reading method:
 
 | Consumer                         | Required action                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------- |
@@ -55,4 +59,4 @@ Config references resolve current Vault values. Restoring old Config text does n
 
 Standard Config / File reads allow up to 5 MiB; Kubernetes integrations use smaller limits. Fix missing references, invalid formats or grants at their source. Disabling TLS verification is not a recovery method.
 
-Vault Namespaces organize items. Moving an item to a different Namespace does not narrow a Token's Environment-wide permissions.
+Vault Namespaces organize items; they do not narrow a Token's environment-wide permissions.

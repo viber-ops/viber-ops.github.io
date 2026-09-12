@@ -4,8 +4,8 @@ import { release, releaseURL } from '../data/site';
 ---
 
 <Site
-  title="Configra — 应用配置与敏感值管理 | Viber Ops"
-  description="集中管理 YAML、JSON、敏感值和客户端证书。通过 Go SDK、CSI 文件或原生 Secret / ConfigMap，把配置交给应用。"
+  title="Configra — 应用配置、密码与证书管理 | Viber Ops"
+  description="在网页里管理不同环境的配置、密码和证书。Go 程序直接读取，Kubernetes 应用可以使用挂载文件或 Secret / ConfigMap。"
   section="products"
 >
   <main id="main">
@@ -14,11 +14,11 @@ import { release, releaseURL } from '../data/site';
         <span class="mini-mark">c</span>
         <span>Configra</span>
         <a class="tag" href={releaseURL}>
-          {release} · Preview
+          {release} · 预发布
         </a>
       </div>
       <h1>
-        应用配置与敏感值，
+        配置、密码和证书，
         <br />
         <span>集中管理。</span>
       </h1>
@@ -42,12 +42,12 @@ import { release, releaseURL } from '../data/site';
         <span>自托管</span>
         <span>YAML / JSON</span>
         <span>Go SDK</span>
-        <span>Kubernetes 双模式</span>
+        <span>Kubernetes 接入</span>
       </div>
       <figure class="workspace-shot">
         <div class="shot-header">
           <span>CONFIGRA / VAULT</span>
-          <span>Vault 条目、环境变体与版本历史</span>
+          <span>按环境保存字段值，查看修改历史</span>
         </div>
         <a href="/assets/configra/vault-light.png" aria-label="查看完整 Configra Vault 截图">
           <img
@@ -69,7 +69,7 @@ import { release, releaseURL } from '../data/site';
       <ul class="check-list">
         <li>同一应用有多个环境，配置文件在仓库、脚本和集群之间反复复制。</li>
         <li>多个配置共用数据库密码或证书，希望管理引用，而不是重复粘贴。</li>
-        <li>研发需要读配置，运维需要查变更、管凭据，双方需要共同的工作台。</li>
+        <li>修改配置后，需要查清谁改了什么，必要时找回旧版本。</li>
         <li>有的应用能用 SDK，有的只能读取文件或环境变量。</li>
       </ul>
     </section>
@@ -89,17 +89,17 @@ import { release, releaseURL } from '../data/site';
         <div class="delivery-grid">
           <article>
             <span class="index-label">GO SDK</span>
-            <h3>直接读取解析后的配置</h3>
-            <p>Go SDK 获取 YAML / JSON，Viper Handler 支持 ETag 轮询与进程内最后可用快照。</p>
+            <h3>Go 程序直接读取</h3>
+            <p>使用 SDK 读取完整的 YAML / JSON。需要定时更新时，可以开启轮询，再由程序校验并应用新配置。</p>
             <a class="text-link" href="/docs/configra/go-sdk/">
               接入 Go SDK →
             </a>
           </article>
           <article>
             <span class="index-label">CSI PROVIDER</span>
-            <h3>把配置挂进 Pod</h3>
+            <h3>把配置挂载成文件</h3>
             <p>
-              Secrets Store CSI provider 挂载配置与文件字段。开启轮换后更新文件，由应用自行重载。
+              适合 Kubernetes 中只读取配置文件的程序。开启 CSI 驱动的定时更新后，文件会刷新，程序仍需重新加载。
             </p>
             <a class="text-link" href="/docs/configra/kubernetes/#csi-文件挂载">
               配置 CSI provider →
@@ -109,7 +109,7 @@ import { release, releaseURL } from '../data/site';
             <span class="index-label">KUBERNETES SYNC</span>
             <h3>同步到 Secret / ConfigMap</h3>
             <p>
-              同步为原生 Secret 或 ConfigMap，兼容 volume 与 envFrom。环境变量更新需要替换 Pod。
+              定期把配置写入 Kubernetes 的 Secret 或 ConfigMap。使用环境变量的程序，需要重新创建 Pod 才能采用新值。
             </p>
             <a class="text-link" href="/docs/configra/kubernetes/#原生-secret--configmap-同步">
               使用原生同步 →
@@ -121,15 +121,15 @@ import { release, releaseURL } from '../data/site';
     <section class="section container capabilities">
       <div class="capability-copy">
         <p class="eyebrow">CONFIGS & VAULT</p>
-        <h2>配置引用 Vault 字段</h2>
+        <h2>密码保存一份，配置按需引用</h2>
         <p>
-          在 Config 中引用 Vault 字段。Configra 按请求环境解析当前值，应用收到的是完整配置文档。
+          把数据库密码等共用值保存在 Vault 中，配置里只写引用。应用读取时，Configra 按环境填入实际值，返回完整配置。
         </p>
         <ul>
-          <li>按环境管理配置与字段变体</li>
+          <li>分别保存开发、测试和生产环境的值</li>
           <li>查看历史、比较变更、克隆配置</li>
-          <li>显式显示或隐藏敏感值</li>
-          <li>通过 Access 与 Audit 页面排查使用和变更</li>
+          <li>密码默认隐藏，需要时再显示</li>
+          <li>通过访问和审计日志排查读取与修改</li>
         </ul>
         <a class="text-link" href="/docs/configra/configuration/">
           理解配置与 Vault →
@@ -163,27 +163,24 @@ import { release, releaseURL } from '../data/site';
       </div>
       <div class="capability-copy">
         <p class="eyebrow">CLIENT CERTIFICATES</p>
-        <h2>生成 CA，签发客户端证书</h2>
+        <h2>给应用签发客户端证书</h2>
         <p>
-          在工作台生成 CA、持续签发和管理客户端证书。CA
-          签名私钥加密保留；私钥导出只随首次创建响应提供。
+          在网页里创建 CA（证书颁发机构），再为应用签发证书。服务会加密保存 CA 私钥，用于后续签发；需要私钥备份时，只能在创建成功后首次下载。
         </p>
         <a class="text-link" href="/docs/configra/certificates/">
-          了解证书生命周期 →
+          创建应用访问凭据 →
         </a>
       </div>
     </section>
     <section class="boundary-note container">
       <span class="tag">使用前须知</span>
       <div>
-        <h3>当前权限范围与发布状态</h3>
+        <h3>当前版本适合评估和试用</h3>
         <p>
-          机器 Token 当前按 Environment 授权；同一环境不是细粒度隔离边界。Configra
-          也不提供动态数据库凭据、HSM/KMS
-          密钥托管或应用自动重启。当前为预发布，生产性能验收尚未完成。
+          一个 Token 可以读取被授权环境下的全部配置，不能只授权单个条目。当前为预发布，生产性能和恢复验收尚未完成；上线前请先确认权限和运维要求。
         </p>
         <a class="text-link" href="/docs/configra/security/">
-          阅读安全边界与发布状态 →
+          查看使用限制与安全说明 →
         </a>
       </div>
     </section>

@@ -1,47 +1,55 @@
 ---
 layout: ../../../../layouts/Docs.astro
-title: Security and release status
-description: Review implemented protections, verification evidence and remaining work before deploying.
+title: Limitations and security
+description: Who can read which data, what is not automatic, and what remains before production use.
 source: docs/security-architecture-review.md
 ---
 
 ## Release status
 
-**v0.1.0-rc.1 is a preview, not a production-stable release.** The tag comes from the reviewed feature branch; it does not merge the draft PR. No throughput, availability SLA or independent security certification is claimed.
+**v0.1.0-rc.2 is a preview, not a production-stable release.** It replaces the withdrawn server rc.1 and starts a cleaned-up source history. Published SDK versions have not been rewritten.
 
-The branch has records of core/SDK race tests, database/container integration, 41 browser regressions and real Kubernetes / CSI rotation checks. See the [review report](https://github.com/viber-ops/configra/blob/v0.1.0-rc.1/docs/security-architecture-review.md) for scope and results. These records do not replace deployment-specific acceptance.
+Use it to evaluate the product. Before deploying it in production, test capacity, recovery and security in your own environment. Passing a build or functional test does not establish throughput or availability guarantees.
 
-## Trust boundaries
+The [production checklist](https://github.com/viber-ops/configra/blob/v0.1.0-rc.2/docs/production-readiness.md) lists remaining work. [Historical verification records](https://github.com/viber-ops/configra/blob/v0.1.0-rc.2/docs/verification/2026-09-12.md) identify each run's version and scope; they are not complete acceptance evidence for a later release.
 
-- Tokens grant **Environment-wide** access. Same-environment Tokens can read the same Configs / Vault values; certificates and Kubernetes namespaces do not add per-resource authorization.
-- Human Admin / Viewer roles are workspace-wide, not per-project or per-tenant.
-- CA signing keys are encrypted in MySQL. Compromise of both the database and Master Key defeats that protection.
-- Revocation prevents future authorized reads, not use of previously delivered data.
-- The CSI provider is a trusted node extension with a hostPath socket. Sync controllers can read/write Secrets in their application namespace.
+## Who can read which data
 
-Untrusted applications or tenants need separate trust domains/deployments or finer server-side authorization. Naming conventions do not provide isolation.
+- **Tokens grant access by environment.** An application granted `production` can read all its Configs and Vault values, not just one item.
+- **Namespaces only organize resources.** Neither Vault nor Kubernetes Namespaces narrow the Token's server-side access.
+- **Human roles cover the whole workspace.** Admins can manage data; Viewers have read-only access and cannot reveal sensitive values. These are not per-project roles.
 
-## Implemented protections
+If teams or applications must not read each other's data, do not rely on names within a shared environment. Use separate deployments or a system with the permission granularity you need.
 
-HTTPS verification, default mTLS and active Token/certificate checks protect machine reads. OIDC and Admin permissions protect management operations. Vault content and CA signing keys use authenticated encryption. Client private keys are not retained; private exports are excluded from replay and Audit payloads.
+## Protections and their limits
 
-Kubernetes object paths, response sizes and cross-namespace references are constrained. Native synchronization protects unrelated ownership and retains the previous successful value after read failures.
+Application reads use HTTPS and, by default, both a Token and a client certificate. The configured login provider authenticates people; management changes require Admin permission.
 
-These mechanisms depend on correct deployment and credential/Master Key management. They do not establish an absence of security risks.
+Vault values and CA signing keys are encrypted in the database. Someone who obtains both the database and Master Key may still decrypt them, so control and back them up separately. Client private keys are delivered only at issuance and are not retained by the service.
 
-## Remaining work
+Revoking a Token, client certificate or CA prevents later authorized reads. It **does not delete configuration already downloaded** or clear a synchronized Kubernetes Secret.
 
-| Item                                       | Current status                                                                                                      |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| 1000 QPS gate                              | Warmup failed on the shared Docker host; the measured phase did not run. Do not advertise that capacity as accepted |
-| Gateway rejection audit                    | Malformed JSON, missing operation IDs and forbidden Viewer writes are not all persisted to durable Audit            |
-| Large resource inventories                 | Some backend lists return full collections; client-side pagination is not database pagination                       |
-| Master Key rotation                        | No automated rotation or HSM/KMS custody                                                                            |
-| Multi-tenant isolation                     | No Config/Item-level grants                                                                                         |
-| Application restart and renewal deployment | No automatic process restart or deployment of renewed credentials                                                   |
+The CSI provider is a trusted component running on Kubernetes nodes. A sync controller can read and write Secrets in its application namespace. Review these permissions before installing either component.
 
-Access events use best-effort NATS delivery. Persisted Audit uses an outbox, but this is not a guarantee of zero-loss auditing of every request.
+## What is not guaranteed yet
 
-## Report safely
+| Item | Effect on your deployment |
+| --- | --- |
+| Sustained 1000 reads per second | The required ten-minute gate has not passed; do not plan production capacity from that figure |
+| Large configuration inventories | Some backend endpoints return full collections; UI pagination does not mean one database page is queried |
+| Automatic Master Key rotation | No automatic rotation or HSM / cloud KMS custody |
+| Per-Config permissions | Grants still cover an entire environment |
+| Automatic application restarts | Configuration changes need application reload logic or deployment-controlled restarts |
+| Automatic renewal deployment | New certificates can be issued, but deployment and expiry alerts need separate arrangements |
 
-Use public issues only for non-sensitive problems. Never attach live Tokens, private keys, production configuration or confidential exploit details. Establish a private reporting channel with maintainers before providing the minimum sensitive reproduction details.
+## Access and Audit logs
+
+Access records describe reads and are sent through NATS. They may be lost during failures, so they do not guarantee a record for every read.
+
+Audit records describe changes. Stored events use a database-backed delivery queue with retries. rc.2 fixes certificate-event decoding and adds records for authenticated rejected writes. If a receipt cannot be persisted, the request returns `503 audit_unavailable`. The service cannot promise a durable record while its database is unavailable; large recovery/failure drills remain open.
+
+## Report a problem
+
+For ordinary usage problems, [open an issue](https://github.com/viber-ops/configra/issues) with the version, status code, Request ID and a sanitized reproduction. Do not attach Tokens, private keys, production configuration or complete sensitive responses.
+
+Use the repository's [private vulnerability reporting](https://github.com/viber-ops/configra/security/advisories/new) for security findings. Do not publish confidential exploit details first.

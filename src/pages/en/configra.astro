@@ -4,8 +4,8 @@ import { release, releaseURL } from '../../data/site';
 ---
 
 <Site
-  title="Configra — Configuration and sensitive-value management | Viber Ops"
-  description="Manage YAML, JSON, sensitive values and client certificates. Applications read configuration through the Go SDK, CSI files or native Kubernetes objects."
+  title="Configra — Application settings, passwords and certificates | Viber Ops"
+  description="Manage settings, passwords and certificates by environment in a web interface. Connect Go programs directly or use files and native objects in Kubernetes."
   section="products"
 >
   <main id="main">
@@ -47,7 +47,7 @@ import { release, releaseURL } from '../../data/site';
       <figure class="workspace-shot">
         <div class="shot-header">
           <span>CONFIGRA / VAULT</span>
-          <span>Items, environment variants and revision history</span>
+          <span>Values by environment, with change history</span>
         </div>
         <a href="/assets/configra/vault-light.png" aria-label="Open the full Vault screenshot">
           <img
@@ -99,10 +99,10 @@ import { release, releaseURL } from '../../data/site';
         <div class="delivery-grid">
           <article>
             <span class="index-label">GO SDK</span>
-            <h3>Read resolved configuration</h3>
+            <h3>Read directly from Go</h3>
             <p>
-              Fetch YAML / JSON with the Go SDK. The Viper Handler adds ETag polling and an
-              in-memory last-known-good snapshot.
+              Fetch complete YAML / JSON with the SDK. Enable polling when you need updates,
+              then validate and apply the new settings in your program.
             </p>
             <a class="text-link" href="/en/docs/configra/go-sdk/">
               Use the Go SDK →
@@ -112,8 +112,8 @@ import { release, releaseURL } from '../../data/site';
             <span class="index-label">CSI PROVIDER</span>
             <h3>Mount files into a Pod</h3>
             <p>
-              The Secrets Store CSI provider mounts Configs and File fields. Driver rotation updates
-              files; your application reloads them.
+              For programs in Kubernetes that read configuration files. Enable the CSI driver's
+              periodic updates, and make sure the application reloads the files.
             </p>
             <a class="text-link" href="/en/docs/configra/kubernetes/#csi-file-mounts">
               Set up the CSI provider →
@@ -123,8 +123,8 @@ import { release, releaseURL } from '../../data/site';
             <span class="index-label">KUBERNETES SYNC</span>
             <h3>Sync to a Secret or ConfigMap</h3>
             <p>
-              Use native volumes or envFrom. Volume updates follow Kubernetes behavior;
-              environment-variable changes require Pod replacement.
+              Copy configuration into native Kubernetes objects at regular intervals.
+              Programs using environment variables need a new Pod to adopt changed values.
             </p>
             <a class="text-link" href="/en/docs/configra/kubernetes/#native-object-sync">
               Use native synchronization →
@@ -136,16 +136,16 @@ import { release, releaseURL } from '../../data/site';
     <section class="section container capabilities">
       <div class="capability-copy">
         <p class="eyebrow">CONFIGS & VAULT</p>
-        <h2>Reference Vault fields in configuration</h2>
+        <h2>Store shared passwords once</h2>
         <p>
-          Configra resolves current field values for the requested environment. Applications receive
-          the complete document.
+          Store shared values in Vault and refer to them in configuration. When an application reads,
+          Configra fills in the values for that environment and returns the complete document.
         </p>
         <ul>
-          <li>Manage configuration and field variants by environment</li>
+          <li>Keep separate values for development, testing and production</li>
           <li>Inspect history, compare changes and clone configuration</li>
-          <li>Explicitly reveal or conceal sensitive values</li>
-          <li>Investigate reads and changes through Access and Audit</li>
+          <li>Keep passwords hidden until you choose to reveal them</li>
+          <li>Investigate reads and changes through access and audit logs</li>
         </ul>
         <a class="text-link" href="/en/docs/configra/configuration/">
           Read about Configs and Vault →
@@ -181,8 +181,8 @@ import { release, releaseURL } from '../../data/site';
         <p class="eyebrow">CLIENT CERTIFICATES</p>
         <h2>Create CAs and issue client certificates</h2>
         <p>
-          Generate a CA and issue client identities in the workspace. CA signing keys are retained
-          encrypted; private exports are returned only with the original creation response.
+          Create a certificate authority (CA) in the workspace, then issue certificates for applications.
+          Configra keeps its signing key encrypted for later issuance. A private-key backup is available only at creation.
         </p>
         <a class="text-link" href="/en/docs/configra/certificates/">
           Manage client certificates →
@@ -192,11 +192,11 @@ import { release, releaseURL } from '../../data/site';
     <section class="boundary-note container">
       <span class="tag">Before deployment</span>
       <div>
-        <h3>Permission scope and release status</h3>
+        <h3>A preview for evaluation</h3>
         <p>
-          Machine Tokens grant Environment-wide access, not per-resource isolation. Configra does
-          not provide dynamic database credentials, HSM/KMS custody or application restarts. This is
-          a preview release; production performance acceptance is incomplete.
+          A Token can read every configuration in a granted environment, not just one item.
+          Production performance and recovery acceptance remain incomplete. Review the permissions
+          and operational requirements before deploying.
         </p>
         <a class="text-link" href="/en/docs/configra/security/">
           Read the security and release status →

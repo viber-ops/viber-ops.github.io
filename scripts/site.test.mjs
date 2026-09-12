@@ -42,6 +42,50 @@ test('all product and documentation routes are generated', () => {
   assert.ok(existsSync(join(root, 'sitemap.xml')));
 });
 
+test('public guides use the current server and SDK release', () => {
+  for (const page of pages) {
+    const html = readFileSync(page, 'utf8');
+    assert.doesNotMatch(html, /github\.com\/viber-ops\/configra(?:-go)?\/(?:blob|tree|releases\/(?:tag|download))\/v0\.1\.0-rc\.1(?:[\/"#<]|$)/);
+    if (page.includes('/docs/configra/')) assert.match(html, /v0\.1\.0-rc\.2/);
+  }
+});
+
+const sourceRoot = resolve(root, '..');
+function exampleBlocks(source) {
+  return [...source.matchAll(/^```(\w*)\n([\s\S]*?)^```/gm)].map((match) => ({
+    language: match[1],
+    code: match[2].split('\n')
+      .map((line) => line.replace(/(?:^\s*|\s+)(?:#|\/\/).*$/, '').trimEnd())
+      .filter((line) => line.trim()).join('\n'),
+  }));
+}
+
+test('Chinese and English guides keep executable examples in sync', () => {
+  const names = readdirSync(join(sourceRoot, 'src/pages/docs/configra')).filter((name) => name.endsWith('.md'));
+  for (const name of names) {
+    const chinese = readFileSync(join(sourceRoot, 'src/pages/docs/configra', name), 'utf8');
+    const english = readFileSync(join(sourceRoot, 'src/pages/en/docs/configra', name), 'utf8');
+    assert.deepEqual(exampleBlocks(chinese), exampleBlocks(english), name);
+  }
+});
+
+test('walkthrough separates API startup, demo shutdown and database restore', () => {
+  for (const locale of ['', 'en/']) {
+    const quickstart = readFileSync(join(sourceRoot, `src/pages/${locale}docs/configra/quickstart.md`), 'utf8');
+    assert.match(quickstart, /listen: localhost:18089/);
+    assert.match(quickstart, /CONFIGRA_URL=https:\/\/localhost:18089/);
+    assert.match(quickstart, /--project-name configra-local/);
+    assert.match(quickstart, /-f deploy\/compose\.test\.yaml -f deploy\/compose\.local\.yaml stop/);
+    const operations = readFileSync(join(sourceRoot, `src/pages/${locale}docs/configra/operations.md`), 'utf8');
+    const blocks = exampleBlocks(operations);
+    const backup = blocks.find((block) => block.code.includes('sh mysql-backup.sh'));
+    const restore = blocks.find((block) => block.code.includes('sh mysql-restore.sh'));
+    assert.ok(backup && restore);
+    assert.notEqual(backup, restore, 'Copying backup commands must not also run a restore');
+    assert.match(restore.code, /configra_restore_trial/);
+  }
+});
+
 for (const page of pages) {
   const relative = page.slice(root.length).replace(/index\.html$/, '');
   const html = readFileSync(page, 'utf8');

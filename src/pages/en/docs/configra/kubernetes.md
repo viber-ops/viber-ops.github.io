@@ -1,26 +1,38 @@
 ---
 layout: ../../../../layouts/Docs.astro
 title: Kubernetes integration
-description: Choose CSI file mounts or native Secret / ConfigMap synchronization for application Pods.
+description: Let applications in Kubernetes read Configra through files or existing Secret / ConfigMap usage.
 source: kubernetes/README.md
 ---
 
-## Choose a consumption mode
+This guide assumes you can deploy applications with `kubectl`. It covers application reads, not [deploying Configra itself](/en/docs/configra/deployment/). For a first evaluation, use the [local quickstart](/en/docs/configra/quickstart/) without Kubernetes.
+
+## Choose a reading method
 
 | Mode               | Stored in                                    | Updates                                              | Use when                                              |
 | ------------------ | -------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
 | CSI provider       | Ephemeral Pod CSI files                      | Driver rotation; application rereads                 | You do not want native configuration objects          |
 | Binding controller | Secret or ConfigMap in Kubernetes API / etcd | Native volume refresh; envFrom needs Pod replacement | The application already uses Kubernetes configuration |
 
-Configra supplies the source; it does not transparently replace Kubernetes' built-in API. Kubernetes still controls native objects and Pod lifecycle, and the application still decides when to reload.
+You can maintain configuration in Configra instead of editing ConfigMaps, without replacing Kubernetes' built-in API:
+
+- **CSI files:** a driver mounts configuration in the Pod without first creating a native Secret / ConfigMap.
+- **Native synchronization:** a background controller periodically reads Configra and writes a Secret / ConfigMap. Applications keep their existing file or environment-variable setup.
+
+Neither method reloads your application. Environment variables are read at process startup, so changed variables need a newly created Pod.
 
 ## Prepare deployment
 
-First deploy the [Configra service](/en/docs/configra/deployment/). Get `kubernetes/deploy` and `kubernetes/examples` from the tagged source or release bundle.
+Before starting:
 
-Build and push the `configra-kubernetes` image, then replace example registry, API URL and Namespace values in overlays. The API origin is fixed by the provider/controller deployment; workload parameters cannot override it.
+1. Deploy [Configra](/en/docs/configra/deployment/) with an API address reachable from the cluster. `localhost` inside a Pod points to that Pod, not your computer.
+2. Get `kubernetes/deploy` and `kubernetes/examples` from rc.2 source or a release bundle. Run the commands from that root directory.
+3. Create Configra environment `production` and Config `application`. If using the quickstart's `development` / `payment`, change those two fields in the YAML below.
+4. Prepare a Token granting that environment plus a client certificate/key, using the [credential guide](/en/docs/configra/certificates/).
 
-Create workload credentials in the application namespace, shown here as `configra-app`, using securely distributed files:
+Build and push the `configra-kubernetes` image. An overlay is your deployment customization directory: it replaces example images, API addresses and namespaces without changing the program. The provider/controller deployment selects the API address; application read rules cannot override it.
+
+Make sure the application namespace exists, creating it first if needed. This example uses `configra-app`. Replace `/secure/` paths with the actual protected files, then create the credentials Secret:
 
 ```sh
 kubectl -n configra-app create secret generic configra-credentials \
@@ -35,7 +47,7 @@ Use separate workload Tokens/certificates for independent rotation and revocatio
 
 ## CSI file mounts
 
-Install a patched Secrets Store CSI Driver. Current cluster evidence used Kubernetes 1.35.0 and Driver 1.6.1. For file refresh, enable driver `enableSecretRotation=true` and set an appropriate `rotationPollInterval`.
+Install Secrets Store CSI Driver to mount the provider's returned content in Pods. Recorded cluster tests used Kubernetes 1.35.0 and Driver 1.6.1; they do not establish results for other combinations. Use the [official installation instructions](https://secrets-store-csi-driver.sigs.k8s.io/getting-started/installation.html). For periodic updates, enable `enableSecretRotation=true` and set `rotationPollInterval`.
 
 Render the repository example first. Apply your configured overlay, not an unchanged example-registry reference:
 
@@ -45,7 +57,7 @@ kubectl kustomize kubernetes/deploy/provider
 kubectl apply -f kubernetes/examples/provider.yaml
 ```
 
-The SecretProviderClass portion is below. The full example includes a Pod, read-only mount and `nodePublishSecretRef`:
+A `SecretProviderClass` specifies what to read and which files to create. This fragment mounts Config `application` from `production` as `app.yaml`. It is not a complete application deployment: the repository example also supplies the Pod, read-only mount and `nodePublishSecretRef` credential reference:
 
 ```yaml
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -70,7 +82,7 @@ The provider is a trusted node extension. It runs as root to manage a hostPath U
 
 ## Native object sync
 
-Install the CRD once and a controller in each application namespace. The controller uses a namespaced Role and two replicas with leader election. Credential references and targets cannot cross namespaces. Keep it away from Configra's bootstrap Master Key namespace.
+Install the CRD so Kubernetes recognizes `ConfigraBinding` rules, then run a controller in the application namespace. The example has two replicas, with an elected leader handling synchronization. Credentials and targets must stay in that namespace. Do not install it in the namespace holding Configra's Master Key.
 
 ```sh
 kubectl apply -f kubernetes/deploy/crd.yaml
@@ -101,7 +113,9 @@ spec:
       path: app.yaml
 ```
 
-Secret is the default. ConfigMaps are not confidential storage. Writing Vault-derived values to one requires explicit `allowSensitiveConfigMap: true`. Even a Config without Vault references may contain sensitive data, so operators must choose the target accordingly.
+The `ConfigraBinding` above reads once per minute and writes `app.yaml` into Secret `application-config`.
+
+Secret is the default. Secrets still need cluster access controls and suitable storage encryption; the name alone does not protect content. ConfigMaps are not confidential storage. Writing Vault-derived values to one requires explicit `allowSensitiveConfigMap: true`. Even a Config without Vault references may contain sensitive data, so operators must choose the target accordingly.
 
 For `target.mode: env`, use flat mappings such as `PORT: 8080` and `LOG_LEVEL: info`. Nested values, nulls, duplicate keys and cross-object collisions are rejected. File fields use `files` mode.
 

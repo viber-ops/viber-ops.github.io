@@ -1,39 +1,45 @@
 ---
 layout: ../../../../layouts/Docs.astro
 title: Overview
-description: A self-hosted service for application configuration, sensitive values and machine access.
+description: What Configra does, who it is for, and where to start.
 source: README.md
 ---
 
-Configra stores environment-specific YAML / JSON and Vault fields that configuration can reference. Applications receive resolved documents through HTTPS, the Go SDK or Kubernetes integration.
+Configra is a configuration service you deploy yourself. You manage application settings, database passwords and certificates in a web interface. Applications then read the values they need from Configra.
 
-## When to use it
+For example, a payment service may use different database passwords in development and production. You can keep both sets in Configra and let the application read by environment, without putting passwords in its source repository.
 
-Use Configra when configuration is copied between repositories, deployment scripts and clusters, or when several configurations share credentials. The management UI provides a common place to inspect current values, revisions and access records.
+## Where to start
 
-- **Developers** read configuration, validate it and apply it to application state.
-- **Operators** manage environments, versions, Tokens and client certificates.
-- **Platform teams** connect Pods through CSI files or native Secret / ConfigMap objects.
+To try the product, follow the [local quickstart](/en/docs/configra/quickstart/) to open the workspace and create a configuration. You do not need a Kubernetes cluster or prior knowledge of certificate issuance for that first step.
 
-## Choose an integration
+If Configra is already running and you want to connect an application, choose its reading method:
 
-| Application                    | Start here                                                             | How updates take effect                                                                   |
-| ------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Go code you can change         | [Go SDK](/en/docs/configra/go-sdk/)                                    | The application validates and applies a new snapshot                                      |
-| Reads configuration files      | [CSI file mounts](/en/docs/configra/kubernetes/#csi-file-mounts)       | The driver rotates files; the application rereads them                                    |
-| Uses envFrom or native volumes | [Native object sync](/en/docs/configra/kubernetes/#native-object-sync) | Volumes follow Kubernetes refresh behavior; environment variables require Pod replacement |
-| Evaluating the UI              | [Local quickstart](/en/docs/configra/quickstart/)                      | Run the development stack and use the browser workspace                                   |
+| How the application reads | Guide | What must happen after a change |
+| --- | --- | --- |
+| A Go program requests configuration | [Go SDK](/en/docs/configra/go-sdk/) | The program validates and applies the new configuration |
+| A program in Kubernetes reads files | [CSI file mounts](/en/docs/configra/kubernetes/#csi-file-mounts) | Enable file updates and make the program reread them |
+| It already uses Secrets / ConfigMaps | [Kubernetes synchronization](/en/docs/configra/kubernetes/#native-object-sync) | Reread updated files; recreate Pods to change environment variables |
 
-## Service components
+## What you manage
 
-The `configra` executable has two modes. **Management** serves the UI, OIDC login and management operations. **API** serves machine reads. They share MySQL and an external Master Key and can run in separate Kubernetes Deployments.
+- **Environment:** separates settings for development, testing or production.
+- **Config:** the YAML or JSON document an application reads.
+- **Vault:** stores values shared by configurations, such as database accounts, passwords and certificate files. This is a Configra feature, not a separate HashiCorp Vault installation.
+- **Credentials:** Tokens and client certificates used to control application access.
 
-MySQL stores transactional state. NATS carries best-effort Access events. ClickHouse stores Access / Audit logs. The SDK and Kubernetes adapters consume Configra; they do not provide Configra's own startup credentials.
+Use the [glossary](/en/docs/configra/concepts/) when a workspace label is unfamiliar.
 
-## Before deploying
+## What a deployment needs
 
-The current release is `v0.1.0-rc.1`, a preview rather than a completed production acceptance.
+Configra runs as two processes: `management` serves the workspace, and `api` serves application reads. Starting the workspace does not also start the read API.
 
-Machine Tokens grant **Environment-wide** access. Vault Namespaces are organizational labels, not resource-level permission boundaries. Human Admin / Viewer roles are workspace-wide. Use separate trust domains when applications or tenants do not trust one another.
+They share MySQL and a Master Key used for encryption. A deployed service also needs a login provider, NATS messaging, ClickHouse log storage and HTTPS certificates. The [deployment guide](/en/docs/configra/deployment/) explains these inputs; the local quickstart prepares demo versions.
 
-Continue with the [local quickstart](/en/docs/configra/quickstart/) or review the [security boundaries](/en/docs/configra/security/).
+## Before you use it
+
+The current server release is **v0.1.0-rc.2**, a preview for evaluation. Production acceptance is not complete.
+
+A Token granted an environment can read all its Configs and Vault values, not just one item. Administrator and read-only roles also cover the whole workspace. If teams or applications must not read each other's data, names and folders are not enough: use separate deployments or another suitable isolation mechanism.
+
+[Current limitations](/en/docs/configra/security/) · [Try it locally](/en/docs/configra/quickstart/)

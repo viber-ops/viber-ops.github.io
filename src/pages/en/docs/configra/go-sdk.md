@@ -1,15 +1,17 @@
 ---
 layout: ../../../../layouts/Docs.astro
 title: Go SDK
-description: Read resolved configuration, files or periodically refreshed Viper snapshots from Go.
+description: Read configuration from Go; start with one read and add Viper polling only when needed.
 ---
 
 ## Install
 
-Use Go 1.25.13 or newer. The SDK is a Go library, not an operating-system-specific server binary.
+This guide is for developers connecting a Go application. If no server is running, first complete the client steps in the [local quickstart](/en/docs/configra/quickstart/).
+
+Use Go 1.25.13 or newer and run this command in your existing Go project. The SDK is a library; you do not need the server's macOS or Linux executable:
 
 ```sh
-go get github.com/viber-ops/configra-go@v0.1.0-rc.1
+go get github.com/viber-ops/configra-go@v0.1.0-rc.2
 ```
 
 Prepare the API HTTPS address, an Environment Token and, for mTLS, an issued client certificate and key. An internal server CA also requires its public certificate.
@@ -33,7 +35,7 @@ if err != nil {
 // Pass result.ETag to a later read; unchanged content returns ErrNotModified.
 ```
 
-Import `github.com/viber-ops/configra-go` and supply your application's context as `ctx`. The [complete example](https://github.com/viber-ops/configra-go/blob/v0.1.0-rc.1/examples/basic/main.go) compiles and prints revision metadata, not configuration values.
+Import `github.com/viber-ops/configra-go` and supply your application's context as `ctx`. The [complete example](https://github.com/viber-ops/configra-go/blob/v0.1.0-rc.2/examples/basic/main.go) compiles and prints revision metadata, not configuration values.
 
 ## Choose an initialization path
 
@@ -47,7 +49,9 @@ Choose one. All three use the same client validation; they do not silently merge
 
 ## Environment variables
 
-Have the deployment provide connection settings. A Token value and a Token file are alternatives; the file form works with mounted Kubernetes Secrets:
+The following runs the SDK repository's example. Clone the `configra-go` rc.2 tag and enter that directory, or use the adjacent SDK checkout from the quickstart. Replace the address and `/secure/` paths with actual values. Your own application can use the same settings with its own startup command.
+
+Choose a Token value or a Token file. A Token file contains only the Token, without quotes, and works with mounted Kubernetes Secrets:
 
 ```sh
 export CONFIGRA_URL=https://configra-api.example.internal:9443
@@ -128,6 +132,8 @@ file, err := client.ReadFile(ctx, "development", "platform", "database", "tls_ce
 
 ## Viper snapshots and live updates
 
+Skip this section if the application only reads at startup. Viper is a Go configuration parser; a Snapshot is a downloaded and parsed configuration copy.
+
 Create a `NewViperHandler` with Client, Environment, Config, OnChange and OnError. Call `Load(ctx)`, apply the initial snapshot, then start `Watch(ctx)`:
 
 ```go
@@ -158,6 +164,8 @@ This fragment expects your own `applyConfig` and logger. `Load` does not call On
 Watch defaults to about 30 seconds with jitter, rejects intervals below five seconds, and backs repeated failures off to at most five minutes. Fetch or parse failure retains the process's last-known-good snapshot. There is no disk cache to recover a failed cold start.
 
 ## TLS and rotation
+
+Ordinary file-based setup needs no custom TLS code. The callback below is an advanced option for changing certificates without restarting the process.
 
 The SDK only accepts HTTPS and rejects `InsecureSkipVerify`. It owns its transport rather than depending on `http.DefaultTransport`.
 

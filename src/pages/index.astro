@@ -5,7 +5,7 @@ import { products } from '../data/site';
 
 <Site
   title="Viber Ops — 自托管运维工具"
-  description="Viber Ops 产品与使用文档。Configra 提供应用配置、敏感值和客户端证书管理，支持 Go SDK 与 Kubernetes 接入。"
+  description="Viber Ops 提供开源的研发运维工具。第一个产品 Configra 用来管理应用配置、密码和证书，网站提供本地体验与部署说明。"
   section="products"
 >
   <main id="main">
@@ -16,12 +16,12 @@ import { products } from '../data/site';
             <span class="status-dot" aria-hidden="true"></span> VIBER OPS
           </p>
           <h1>
-            研发与运维的
+            开源的研发
             <br />
-            <span>自托管工具。</span>
+            <span>与运维工具。</span>
           </h1>
           <p class="hero-intro">
-            Configra 是我们的第一个产品：集中管理应用配置和敏感值，支持 Go SDK 与 Kubernetes 接入。
+            第一个产品是 Configra，用来管理开发、测试和生产环境的配置、密码与证书。软件由你部署，应用从中读取配置。
           </p>
           <div class="actions">
             <a class="button button-light" href="/configra/">
@@ -32,17 +32,17 @@ import { products } from '../data/site';
             </a>
           </div>
           <div class="hero-note">
-            <span>SELF-HOSTED</span>
-            <span>GO SDK</span>
-            <span>KUBERNETES</span>
+            <span>自行部署</span>
+            <span>Go SDK</span>
+            <span>Kubernetes 接入</span>
           </div>
         </div>
         <div class="hero-product">
           <div class="window-caption">
             <span>
-              <span class="mini-mark">c</span> Configra <span class="preview-pill">Preview</span>
+              <span class="mini-mark">c</span> Configra <span class="preview-pill">预发布</span>
             </span>
-            <span class="window-label">VAULT WORKSPACE</span>
+            <span class="window-label">配置与密码管理</span>
           </div>
           <a href="/configra/" aria-label="了解 Configra 配置与敏感值管理">
             <img
@@ -75,16 +75,16 @@ import { products } from '../data/site';
             c<span>_</span>
           </div>
           <div class="product-description">
-            <p class="eyebrow">{product.category}</p>
+            <p class="eyebrow">配置管理</p>
             <h3>
               <a href={product.href}>{product.name}</a>
-              <span class="tag">{product.status}</span>
+              <span class="tag">预发布</span>
             </h3>
             <p>{product.description}</p>
             <div class="inline-tags">
               <span>YAML / JSON</span>
-              <span>Vault</span>
-              <span>mTLS</span>
+              <span>共享密码</span>
+              <span>客户端证书</span>
               <span>Kubernetes</span>
             </div>
           </div>
@@ -103,7 +103,7 @@ import { products } from '../data/site';
       <div>
         <p class="eyebrow">DOCUMENTATION</p>
         <h2>Configra 使用文档</h2>
-        <p>本地启动、应用接入、Kubernetes 部署与备份。</p>
+        <p>第一次使用先在本地打开网页。接入应用、部署服务和备份数据，分别有对应的说明。</p>
       </div>
       <a class="button button-light" href="/docs/configra/quickstart/">
         查看快速开始 →

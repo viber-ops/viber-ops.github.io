@@ -35,6 +35,11 @@ remote fonts, or browser framework runtime is required.
   translations when adding an interface label or a document route.
 - Write product information and instructions, not slogans. Put prerequisites,
   required substitutions and limits next to the command they affect.
+- Introduce a feature with a familiar example before its technical name. Say
+  what the reader needs, where to run a command and what success looks like.
+- Separate the first successful read from optional certificate rotation,
+  Kubernetes and production setup. Put data-loss warnings before stop/restore
+  commands, and never combine backup and restore in one copyable block.
 - Keep examples pinned to a published tag and record limitations honestly.
 - Screenshots live in `public/assets/configra/`; their public URLs are stable.
   These images use synthetic fixtures, not production credentials.
